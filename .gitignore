@@ -1,0 +1,58 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+
+# VS Code or other IDE settings
+.vscode/
+.idea/
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Test/report artifacts
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+
+# Database (if using SQLite locally)
+*.sqlite3
+instance/
+
+# Flask cache
+*.db
+*.sqlite
+
+# Compiled HTML/static cache
+*.sass-cache
+*.cache
+*.bak
+
+# Node modules (if you ever add npm tools for frontend)
+node_modules/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Git backup
+*.orig
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
