@@ -7,7 +7,7 @@ from . import contributor_bp
 from flask import render_template
 
 from flask import Blueprint, request, redirect, url_for, flash, session
-from app.models import db, Place
+from app.models import get_db, Place
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -44,8 +44,8 @@ def add_place():
             status='pending',
             created_at=datetime.utcnow()
         )
-        db.session.add(new_place)
-        db.session.commit()
+        get_db.session.add(new_place)
+        get_db.session.commit()
         flash("Place submitted successfully.")
         return redirect(url_for('contributor.contributor_dashboard'))
 
