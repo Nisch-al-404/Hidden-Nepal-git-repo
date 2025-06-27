@@ -1,5 +1,5 @@
 import mysql.connector
-from flask import render_template, request, redirect, url_for, session, flash
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, current_user, logout_user
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,6 +12,8 @@ from app.models import get_db, User
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        if current_user.role == 'admin':
+            return redirect(url_for('admin.admin_panel'))
         return redirect(url_for('contributor.contributor_dashboard'))
 
     if request.method == 'POST':
@@ -33,15 +35,14 @@ def login():
                 return render_template("auth/login.html")
 
             if user:
-
-                print("Entered:", password)
-                print("Stored:", user['password_hash'])
-                print("Check:", check_password_hash(user['password_hash'], password))
-
                 if user and check_password_hash(user['password_hash'], password):
                     user_obj = User(user['id'],user['username'], user['email'], user['role'])
                     login_user(user_obj)
                     flash("🎉 Logged in successfully!", "success")
+
+                    if user['role'] == 'admin':
+                        return redirect(url_for('admin.admin_panel'))
+
                     return redirect(url_for('contributor.contributor_dashboard'))
                 else:
                     flash("❌ Invalid email or password", "danger")
@@ -80,12 +81,21 @@ def register():
             conn.commit()
             flash("🎉 Registered successfully!", "success")
             return redirect(url_for('auth.login'))
+
         except mysql.connector.IntegrityError:
             flash("⚠️ Email already exists!", "danger")
+        except mysql.connector.Error as e:
+            flash("💥 Database error ", "danger")
+        except KeyError as e:
+            flash("🧩 Missing form data ", "danger")
+        except Exception as e:
+            flash(f"⚠️ Unexpected error occurred", "danger")
+
+
 
         finally:
-            cursor.close()
-            conn.close()
+            if cursor: cursor.close()
+            if conn: conn.close()
 
 
     return render_template("auth/register.html")

@@ -1,3 +1,6 @@
+#Merge branch 'develop' into contributor
+
+#- Merged latest changes from develop to keep contributor branch up to date.
 from flask_login import login_required, current_user
 
 from . import contributor_bp
