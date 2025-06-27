@@ -74,7 +74,7 @@ def register():
             print("Entered:", email)
 
             cursor.execute("""
-                           INSERT INTO users (username, email, password_hash, role, can_contribute)
+                           INSERT INTO users  (username, email, password_hash, role, can_contribute)
                            VALUES (%s, %s, %s, 'contributor', TRUE)
                            """, (username, email, hashed_password))
             conn.commit()
