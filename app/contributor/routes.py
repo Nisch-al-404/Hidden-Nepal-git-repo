@@ -15,10 +15,10 @@ from datetime import datetime
 # contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
 
 UPLOAD_FOLDER = 'static/uploads/'
-
+@contributor_bp.route('/')
 @contributor_bp.route('/dashboard')
 def contributor_dashboard():
-    return render_template('contributor/contributor_dashboard.html')
+    return render_template('contributor/contributor_dashboard.html',user=current_user)
 
 @contributor_bp.route('/add_place', methods=['GET', 'POST'])
 def add_place():
