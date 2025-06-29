@@ -17,5 +17,27 @@ class User(UserMixin):
         self.email = email
         self.role = role
 
-
+#Add Place Model
+class Place:
+    def __init__(self, name, description, latitude, longitude, image_url, contributor_id, status, created_at):
+        self.name = name
+        self.description = description
+        self.latitude = latitude
+        self.longitude = longitude
+        self.image_url = image_url
+        self.contributor_id = contributor_id
+        self.status = status
+        self.created_at = created_at
+    def save(self):
+        db = get_db()
+        cursor = db.cursor()
+        query = """
+        INSERT INTO places (name, description, latitude, longitude, image_url, contributor_id, status, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (self.name, self.description, self.latitude, self.longitude,
+                               self.image_url, self.contributor_id, self.status, self.created_at))
+        db.commit()
+        cursor.close()
+        db.close()    
 # contribute1@gmail.com contribute1
