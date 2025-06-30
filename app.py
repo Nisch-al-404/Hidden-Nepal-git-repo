@@ -1,5 +1,5 @@
 from app import create_app
-from app.contributor.routes import contributor_bp
+from app.contributor import contributor_bp
 app = create_app()
 
 app.config['SECRET_KEY'] = 'your_secret_key_here'
