@@ -84,11 +84,11 @@ def register():
 
         except mysql.connector.IntegrityError:
             flash("⚠️ Email already exists!", "danger")
-        except mysql.connector.Error as e:
+        except mysql.connector.Error:
             flash("💥 Database error ", "danger")
-        except KeyError as e:
+        except KeyError:
             flash("🧩 Missing form data ", "danger")
-        except Exception as e:
+        except Exception:
             flash(f"⚠️ Unexpected error occurred", "danger")
 
 
