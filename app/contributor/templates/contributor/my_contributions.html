@@ -1,0 +1,36 @@
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>My Contributions</title>
+</head>
+<body>
+    <h2>My Submitted Places</h2>
+
+    {% if places %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Submitted On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for place in places %}
+                <tr>
+                    <td>{{ place.name }}</td>
+                    <td>{{ place.status }}</td>
+                    <td>{{ place.created_at.strftime("%Y-%m-%d") if place.created_at else '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven’t submitted any places yet.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('contributor.contributor_dashboard') }}">← Back to Dashboard</a></p>
+</body>
+</html>
+<!-- This HTML file displays a list of places submitted by the user. -->
+<!-- It includes a table with columns for place name, status, and submission date. -->
