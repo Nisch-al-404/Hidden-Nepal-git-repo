@@ -1,30 +1,24 @@
 #Merge branch 'develop' into contributor
 
 #- Merged latest changes from develop to keep contributor branch up to date.
-from .. import contributor_bp
-from flask import request,redirect, url_for, session, render_template
 from flask_login import login_required, current_user
-<<<<<<< HEAD
-=======
-
 from . import contributor_bp
 from flask import render_template
 
-from flask import request, redirect, url_for, flash, session
->>>>>>> 418991f2684ade0c6336e6488935e9ddc9be66da
+from flask import request,redirect, url_for, flash, session
 from app.models import get_db, Place
+
+
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
-<<<<<<< HEAD
-=======
 # contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
->>>>>>> 418991f2684ade0c6336e6488935e9ddc9be66da
 
 UPLOAD_FOLDER = 'static/uploads/'
 @contributor_bp.route('/')
 @contributor_bp.route('/dashboard')
+@login_required
 def contributor_dashboard():
     return render_template('contributor/contributor_dashboard.html',user=current_user)
 
