@@ -17,6 +17,7 @@ from datetime import datetime
 UPLOAD_FOLDER = 'static/uploads/'
 @contributor_bp.route('/')
 @contributor_bp.route('/dashboard')
+@login_required
 def contributor_dashboard():
     return render_template('contributor/contributor_dashboard.html',user=current_user)
 
