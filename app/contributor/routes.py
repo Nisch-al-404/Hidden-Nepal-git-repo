@@ -2,23 +2,25 @@
 
 #- Merged latest changes from develop to keep contributor branch up to date.
 from flask_login import login_required, current_user
-
 from . import contributor_bp
 from flask import render_template
 
-from flask import Blueprint, request, redirect, url_for, flash, session
+from flask import request,redirect, url_for, flash, session
 from app.models import get_db, Place
+
+
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
-contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
+# contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
 
 UPLOAD_FOLDER = 'static/uploads/'
-
+@contributor_bp.route('/')
 @contributor_bp.route('/dashboard')
+@login_required
 def contributor_dashboard():
-    return render_template('contributor/contributor_dashboard.html')
+    return render_template('contributor/contributor_dashboard.html',user=current_user)
 
 @contributor_bp.route('/add_place', methods=['GET', 'POST'])
 def add_place():
@@ -53,8 +55,8 @@ def add_place():
 
 
 
-@contributor_bp.route('/')
-@login_required
-def contributor_dashboard():
+# @contributor_bp.route('/')
+# @login_required
+# def contributor_dashboard():
 
-    return render_template("contributor/contributor_dashboard.html",user=current_user)
+#     return render_template("contributor/contributor_dashboard.html",user=current_user)
