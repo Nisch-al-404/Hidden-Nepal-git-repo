@@ -7,7 +7,7 @@ def get_db():
         host="localhost",
         user="root",               # Default XAMPP user
         password="",               # Default: empty (no password)
-        database="hidden_nepal"    # Your database name in phpMyAdmin
+        database="hiddennepal"    # Your database name in phpMyAdmin
     )
 
 
