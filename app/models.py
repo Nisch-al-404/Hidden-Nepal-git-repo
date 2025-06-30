@@ -6,12 +6,15 @@ def get_db():
     return mysql.connector.connect(
         host="localhost",
         user="root",               # Default XAMPP user
-        password="rOoT@12#3",               # Default: empty (no password)
-        database="hiddennepal"    # Your database name in phpMyAdmin
+        password="",               # Default: empty (no password)
+        database="hidden_nepal"    # Your database name in phpMyAdmin
     )
+
+
 
 class User(UserMixin):
     def __init__(self, id,name, email, role):
+      
         self.id = id
         self.name = name
         self.email = email
@@ -20,6 +23,7 @@ class User(UserMixin):
 #Add Place Model
 class Place:
     def __init__(self, name, description, latitude, longitude, image_url, contributor_id, status, created_at):
+       
         self.name = name
         self.description = description
         self.latitude = latitude
