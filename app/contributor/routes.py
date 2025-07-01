@@ -54,6 +54,17 @@ def add_place():
     return render_template('contributor/add_place.html')
 
 
+@contributor_bp.route('/my_contributions')
+def my_contributions():
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Login required")
+        return redirect(url_for('auth.login'))
+
+    places = Place.query.filter_by(contributor_id=user_id).order_by(Place.created_at.desc()).all()
+    return render_template('contributor/my_contributions.html', places=places)
+# Uncomment the following lines if you want to use the contributor dashboard route
+
 
 # @contributor_bp.route('/')
 # @login_required
