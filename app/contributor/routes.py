@@ -4,16 +4,17 @@
 from flask_login import login_required, current_user
 from . import contributor_bp
 from flask import render_template
+from flask import Blueprint
 
 from flask import request,redirect, url_for, flash, session
-from app.models import get_db, Place
+from app.models import get_db, Place,User
 
 
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
-# contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
+
 
 UPLOAD_FOLDER = 'static/uploads/'
 @contributor_bp.route('/')
@@ -128,6 +129,53 @@ def delete_place(place_id):
     get_db.session.commit()
     flash("Place deleted successfully.")
     return redirect(url_for('contributor.my_contributions'))
+
+contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
+
+@contributor_bp.route('/profile')
+def profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Please log in to access your profile.")
+        return redirect(url_for('auth.login'))  # adjust if your login route differs
+
+    user = User.query.get_or_404(user_id)
+
+    # Counts by status for this contributor
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT status, COUNT(id) as count
+        FROM places
+        WHERE contributor_id = %s
+        GROUP BY status
+    """, (user_id,))
+    raw_counts = cursor.fetchall()
+
+    counts = {'pending': 0, 'approved': 0, 'rejected': 0}
+    for row in raw_counts:
+        status = row['status']
+        count = row['count']
+        if status in counts:
+            counts[status] = count
+
+    total = counts['pending'] + counts['approved'] + counts['rejected']
+
+    recent = (
+        Place.query
+        .filter_by(contributor_id=user_id)
+        .order_by(Place.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    return render_template(
+        'contributor/profile.html',
+        user=user,
+        counts=counts,
+        total=total,
+        recent=recent
+    )
 
 # Uncomment the following lines if you want to use the contributor dashboard route
 
