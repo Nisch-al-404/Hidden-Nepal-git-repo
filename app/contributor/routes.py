@@ -6,7 +6,7 @@ from . import contributor_bp
 from flask import render_template
 
 from flask import request,redirect, url_for, flash, session
-from app.models import get_db, Place, db
+from app.models import get_db, Place
 
 
 from werkzeug.utils import secure_filename
@@ -104,7 +104,7 @@ def edit_place(place_id):
                 image.save(image_path)
                 place.image_url = image_path
 
-        db.session.commit()
+        get_db.session.commit()
         flash("Place updated successfully.")
         return redirect(url_for('contributor.my_contributions'))
 
@@ -124,8 +124,8 @@ def delete_place(place_id):
         flash("You can only delete places that are pending approval.")
         return redirect(url_for('contributor.my_contributions'))
 
-    db.session.delete(place)
-    db.session.commit()
+    get_db.session.delete(place)
+    get_db.session.commit()
     flash("Place deleted successfully.")
     return redirect(url_for('contributor.my_contributions'))
 
