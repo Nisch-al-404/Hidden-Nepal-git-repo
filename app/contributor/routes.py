@@ -74,6 +74,61 @@ def my_contributions():
     cursor.close()
     db.close()
     return render_template('contributor/my_contributions.html', places=places)
+
+#  Edit Place
+@contributor_bp.route('/edit_place/<int:place_id>', methods=['GET', 'POST'])
+def edit_place(place_id):
+    place = Place.query.get_or_404(place_id)
+
+    # Ensure only the contributor can edit + status is pending
+    if place.contributor_id != session.get('user_id'):
+        flash("Unauthorized access.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    if place.status != "pending":
+        flash("You can only edit places that are pending approval.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    if request.method == 'POST':
+        place.name = request.form['name']
+        place.description = request.form['description']
+        place.latitude = request.form['latitude']
+        place.longitude = request.form['longitude']
+        place.updated_at = datetime.utcnow()
+
+        if 'image' in request.files:
+            image = request.files['image']
+            if image.filename:
+                filename = secure_filename(image.filename)
+                image_path = os.path.join(UPLOAD_FOLDER, filename)
+                image.save(image_path)
+                place.image_url = image_path
+
+        get_db.session.commit()
+        flash("Place updated successfully.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    return render_template('contributor/edit_place.html', place=place)
+
+#  Delete Place
+@contributor_bp.route('/delete_place/<int:place_id>', methods=['POST'])
+def delete_place(place_id):
+    place = Place.query.get_or_404(place_id)
+
+    # Ensure only contributor can delete + status is pending
+    if place.contributor_id != session.get('user_id'):
+        flash("Unauthorized access.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    if place.status != "pending":
+        flash("You can only delete places that are pending approval.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    get_db.session.delete(place)
+    get_db.session.commit()
+    flash("Place deleted successfully.")
+    return redirect(url_for('contributor.my_contributions'))
+
 # Uncomment the following lines if you want to use the contributor dashboard route
 
 
