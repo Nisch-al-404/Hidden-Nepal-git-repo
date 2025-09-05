@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Profile</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; background: #f6f8fb; margin: 0; padding: 24px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat { text-align: center; padding: 16px; border: 1px solid #eef0f3; border-radius: 10px; }
+    .stat h3 { margin: 6px 0 0; font-size: 22px; }
+    .stat p { margin: 0; color: #6b7280; font-size: 13px; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 10px; border-bottom: 1px solid #eef0f3; text-align: left; }
+    .badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .badge.pending { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+    .badge.approved { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge.rejected { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .actions a, .actions form button { font-size: 13px; margin-right: 8px; text-decoration: none; background:#eef2ff; border:none; padding:6px 10px; border-radius:8px; color:#3730a3; cursor:pointer; }
+    .actions form { display:inline; }
+    .nav { margin: 12px 0 24px; }
+    .nav a { margin-right: 12px; text-decoration: none; color: #2563eb; }
+    .muted { color:#6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <h2>My Profile</h2>
+      <div class="nav">
+        <a href="{{ url_for('contributor.contributor_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('contributor.add_place') }}">Add Place</a>
+        <a href="{{ url_for('contributor.my_contributions') }}">My Contributions</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Account</h3>
+      <p><strong>Username:</strong> {{ user.username }}</p>
+      <p><strong>Email:</strong> {{ user.email or '—' }}</p>
+      {% if user.created_at %}
+        <p class="muted">Member since {{ user.created_at.strftime("%Y-%m-%d") }}</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Contribution Stats</h3>
+      <div class="grid">
+        <div class="stat">
+          <p>Total</p>
+          <h3>{{ total }}</h3>
+        </div>
+        <div class="stat">
+          <p>Pending</p>
+          <h3>{{ counts.pending }}</h3>
+        </div>
+        <div class="stat">
+          <p>Approved</p>
+          <h3>{{ counts.approved }}</h3>
+        </div>
+        <div class="stat">
+          <p>Rejected</p>
+          <h3>{{ counts.rejected }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Recent Submissions</h3>
+      {% if recent %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in recent %}
+          <tr>
+            <td>{{ p.name }}</td>
+            <td>
+              <span class="badge {{ p.status }}">{{ p.status|title }}</span>
+            </td>
+            <td>{{ p.created_at.strftime("%Y-%m-%d %H:%M") if p.created_at else '' }}</td>
+            <td class="actions">
+              {% if p.status == 'pending' %}
+                <a href="{{ url_for('contributor.edit_place', place_id=p.id) }}">Edit</a>
+                <form action="{{ url_for('contributor.delete_place', place_id=p.id) }}" method="post" onsubmit="return confirm('Delete this place?');">
+                  <button type="submit">Delete</button>
+                </form>
+              {% else %}
+                <a href="{{ url_for('contributor.my_contributions') }}">View</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p class="muted">No submissions yet.</p>
+      {% endif %}
+    </div>
+
+  </div>
+</body>
+</html>
+<!-- This HTML file displays the contributor's profile information, contribution stats, and recent submissions. -->
