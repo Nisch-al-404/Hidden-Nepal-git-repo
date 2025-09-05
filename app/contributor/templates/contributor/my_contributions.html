@@ -28,7 +28,7 @@
     {% else %}
         <p>You haven’t submitted any places yet.</p>
     {% endif %}
- <!--edit and delete butto -->
+ <!--edit and delete button -->
     <td>
     {% if places.status == "pending" %}
         <a href="{{ url_for('contributor.edit_place', places_id=places.id) }}">✏️ Edit</a>
