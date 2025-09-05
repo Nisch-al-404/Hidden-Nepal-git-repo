@@ -1,0 +1,72 @@
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>Add Place</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Submit a New Place</h2>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+        <label>Place Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Description:</label><br>
+        <textarea name="description" required></textarea><br><br>
+
+        <label>Latitude:</label><br>
+        <input type="text" id="latitude" name="latitude" readonly required><br><br>
+
+        <label>Longitude:</label><br>
+        <input type="text" id="longitude" name="longitude" readonly required><br><br>
+
+        <div id="map"></div>
+
+        <label>Upload Image:</label><br>
+        <input type="file" name="image" accept="image/*" required><br><br>
+
+        <button type="submit">Submit Place</button>
+    </form>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([27.7, 85.3], 7); // Default center (Nepal)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker;
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(map);
+            }
+        });
+    </script>
+</body>
+</html>
+<!-- This HTML file is for adding a new place with a map interface to select latitude and longitude. -->
+<!-- It includes a form for place name, description, latitude, longitude, and image upload.
