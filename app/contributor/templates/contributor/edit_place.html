@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Place</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        #map { height: 300px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Edit Place: {{ place.name }}</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <label>Place Name:</label><br>
+        <input type="text" name="name" value="{{ place.name }}" required><br><br>
+
+        <label>Description:</label><br>
+        <textarea name="description" required>{{ place.description }}</textarea><br><br>
+
+        <label>Latitude:</label><br>
+        <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}" readonly required><br><br>
+
+        <label>Longitude:</label><br>
+        <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}" readonly required><br><br>
+
+        <div id="map"></div>
+
+        <label>Current Image:</label><br>
+        <img src="/{{ place.image_url }}" alt="Place Image" width="150"><br><br>
+
+        <label>Upload New Image (optional):</label><br>
+        <input type="file" name="image" accept="image/*"><br><br>
+
+        <button type="submit">Update Place</button>
+    </form>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView(
+            [parseFloat('{{ place.latitude|default(0) }}'), parseFloat('{{ place.longitude|default(0) }}')],
+            10
+        );
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker = L.marker([
+            parseFloat('{{ place.latitude|default(0) }}'),
+            parseFloat('{{ place.longitude|default(0) }}')
+        ]).addTo(map);
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+
+            marker.setLatLng(e.latlng);
+        });
+    </script>
+</body>
+</html>
