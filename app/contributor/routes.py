@@ -110,6 +110,25 @@ def edit_place(place_id):
 
     return render_template('contributor/edit_place.html', place=place)
 
+#  Delete Place
+@contributor_bp.route('/delete_place/<int:place_id>', methods=['POST'])
+def delete_place(place_id):
+    place = Place.query.get_or_404(place_id)
+
+    # Ensure only contributor can delete + status is pending
+    if place.contributor_id != session.get('user_id'):
+        flash("Unauthorized access.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    if place.status != "pending":
+        flash("You can only delete places that are pending approval.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    db.session.delete(place)
+    db.session.commit()
+    flash("Place deleted successfully.")
+    return redirect(url_for('contributor.my_contributions'))
+
 # Uncomment the following lines if you want to use the contributor dashboard route
 
 
