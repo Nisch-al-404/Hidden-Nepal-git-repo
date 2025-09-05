@@ -32,26 +32,29 @@ def add_place():
         contributor_id = session.get('user_id')
         image = request.files['image']
 
+        if not contributor_id:
+            flash("You must be logged in to submit a place.")
+            return redirect(url_for('auth.login'))
+
         filename = secure_filename(image.filename)
         image_path = os.path.join(UPLOAD_FOLDER, filename)
         image.save(image_path)
 
-        new_place = Place(
-            name=name,
-            description=description,
-            latitude=latitude,
-            longitude=longitude,
-            image_url=image_path,
-            contributor_id=contributor_id,
-            status='pending',
-            created_at=datetime.utcnow()
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO places (name, description, latitude, longitude, image_url, contributor_id, status, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (name, description, latitude, longitude, image_path, contributor_id, 'pending', datetime.now())
         )
-        get_db.session.add(new_place)
-        get_db.session.commit()
+        db.commit()
+        cursor.close()
+        db.close()
+
         flash("Place submitted successfully.")
         return redirect(url_for('contributor.contributor_dashboard'))
 
     return render_template('contributor/add_place.html')
+    # return "hello"
 
 
 @contributor_bp.route('/my_contributions')
@@ -61,7 +64,15 @@ def my_contributions():
         flash("Login required")
         return redirect(url_for('auth.login'))
 
-    places = Place.query.filter_by(contributor_id=user_id).order_by(Place.created_at.desc()).all()
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT * FROM places WHERE contributor_id = %s ORDER BY created_at DESC",
+        (user_id,)
+    )
+    places = cursor.fetchall()
+    cursor.close()
+    db.close()
     return render_template('contributor/my_contributions.html', places=places)
 # Uncomment the following lines if you want to use the contributor dashboard route
 

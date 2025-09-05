@@ -1,5 +1,6 @@
 import mysql.connector
-from flask import render_template, request, redirect, url_for, flash
+
+from flask import render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, current_user, logout_user
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -38,6 +39,7 @@ def login():
                 if user and check_password_hash(user['password_hash'], password):
                     user_obj = User(user['id'],user['username'], user['email'], user['role'])
                     login_user(user_obj)
+                    session['user_id'] = user_obj.id
                     flash("🎉 Logged in successfully!", "success")
 
                     if user['role'] == 'admin':

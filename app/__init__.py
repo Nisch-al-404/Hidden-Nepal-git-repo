@@ -1,15 +1,17 @@
-from flask import Flask
+from flask import Flask, Blueprint, session
 from flask_login import LoginManager
 from app.models import get_db, User
+
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key_here'
 
     # Flask-Login Setup
     login_manager = LoginManager()
-    login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
-
+    login_manager.login_view = 'auth.login'
+    
     @login_manager.user_loader
     def load_user(user_id):
         conn = get_db()
@@ -34,4 +36,6 @@ def create_app():
     app.register_blueprint(auth_bp)
 
     return app
+
+
 
