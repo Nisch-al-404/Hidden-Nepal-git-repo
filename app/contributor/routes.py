@@ -6,7 +6,7 @@ from . import contributor_bp
 from flask import render_template
 
 from flask import request,redirect, url_for, flash, session
-from app.models import get_db, Place
+from app.models import get_db, Place, db
 
 
 from werkzeug.utils import secure_filename
@@ -74,6 +74,42 @@ def my_contributions():
     cursor.close()
     db.close()
     return render_template('contributor/my_contributions.html', places=places)
+
+#  Edit Place
+@contributor_bp.route('/edit_place/<int:place_id>', methods=['GET', 'POST'])
+def edit_place(place_id):
+    place = Place.query.get_or_404(place_id)
+
+    # Ensure only the contributor can edit + status is pending
+    if place.contributor_id != session.get('user_id'):
+        flash("Unauthorized access.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    if place.status != "pending":
+        flash("You can only edit places that are pending approval.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    if request.method == 'POST':
+        place.name = request.form['name']
+        place.description = request.form['description']
+        place.latitude = request.form['latitude']
+        place.longitude = request.form['longitude']
+        place.updated_at = datetime.utcnow()
+
+        if 'image' in request.files:
+            image = request.files['image']
+            if image.filename:
+                filename = secure_filename(image.filename)
+                image_path = os.path.join(UPLOAD_FOLDER, filename)
+                image.save(image_path)
+                place.image_url = image_path
+
+        db.session.commit()
+        flash("Place updated successfully.")
+        return redirect(url_for('contributor.my_contributions'))
+
+    return render_template('contributor/edit_place.html', place=place)
+
 # Uncomment the following lines if you want to use the contributor dashboard route
 
 
