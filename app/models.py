@@ -6,15 +6,16 @@ def get_db():
     return mysql.connector.connect(
         host="localhost",
         user="root",               # Default XAMPP user
-        password="rOoT@12#3",               # Default: empty (no password)
-        database="hiddennepal"    # Your database name in phpMyAdmin
+        password="root1234",               # Default: empty (no password)
+        database="Project2"    # Your database name in phpMyAdmin
     )
 
 
 
 class User(UserMixin):
-    def __init__(self, id, name, email, role):
-        self.id = id
+    def __init__(self, user_id,name, email, role):
+      
+        self.id = user_id
         self.name = name
         self.email = email
         self.role = role

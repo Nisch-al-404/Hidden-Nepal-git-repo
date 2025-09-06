@@ -1,0 +1,124 @@
+{%extends "admin/layout.html"%}
+{%block title%}Manage Places - Admin Dashboard{%endblock%}
+
+{%block content%}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+                {% if category == "danger" %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 pr-12 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">{{ message }}</span>
+                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                            <svg class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button" viewBox="0 0 20 20" onclick="this.parentElement.parentElement.remove();">
+                                <title>Close</title>
+                                <path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 10-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 101.414 1.414L10 11.414l2.934 2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z"/>
+                            </svg>
+                        </span>
+                    </div>
+                {% elif category == "success" %}
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 pr-12 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">{{ message }}</span>
+                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                            <svg class="fill-current h-6 w-6 text-green-500 cursor-pointer" role="button" viewBox="0 0 20 20" onclick="this.parentElement.parentElement.remove();">
+                                <title>Close</title>
+                                <path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 10-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 101.414 1.414L10 11.414l2.934 2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z"/>
+                            </svg>
+                        </span>
+                    </div>
+                {% else %}
+                    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 pr-12 py-3 rounded relative" role="alert"></div>
+                        <span class="block sm:inline">{{ message }}</span>
+                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                            <svg class="fill-current h-6 w-6 text-blue-500 cursor-pointer" role="button" viewBox="0 0 20 20" onclick="this.parentElement.parentElement.remove();">
+                                <title>Close</title>
+                                <path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 10-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 101.414 1.414L10 11.414l2.934 2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z"/>
+                            </svg>
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 text-center sm:text-left">Manage Places</h1>
+        <p class="mt-1 text-lg text-gray-600 text-center sm:text-left">View, approve, edit or delete places submitted by contributors</p>
+    </div>
+    <!-- Filter / Search Bar -->
+    <form class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6" method="GET" action="/admin/manage_places">
+        <div class="flex-1">
+            <label for="search" class="sr-only">Search by</label>
+            <input type="text" id="search" name="search" placeholder="Place or contributor name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div class="flex-1 sm:w-auto">
+            <select id="status" name="status" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500" defaultValue="all">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="flex-1 sm:w-auto">
+            <select id="sort" name="sort" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500" defaultValue="newest">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+            </select>
+        </div>
+        <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700">Apply</button>
+    </form>
+
+    <!-- Data Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Place ID</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Place Name</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Contributor</th>
+                    <th class="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Submitted On</th>
+                    <th class="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for place in places %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 whitespace-nowrap text-gray-900">{{ place.place_id }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <a href="/places/{{ place.place_id }}/details" class="text-blue-600 hover:underline">
+                            {{ place.place_name }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-gray-900">
+                        <a href="/users/{{ place.contributor_name }}" class="text-blue-600 hover:underline">
+                            {{ place.contributor_name }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-center">
+                        {% if place.status == 'pending' %}
+                            <span class="bg-yellow-100 text-yellow-800 px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Pending</span>
+                        {% elif place.status == 'approved' %}
+                            <span class="bg-green-100 text-green-800 px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Approved</span>
+                        {% elif place.status == 'rejected' %}
+                            <span class="bg-red-100 text-red-800 px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Rejected</span>
+                        {% else %}
+                            <span class="bg-gray-100 text-gray-800 px-2 inline-flex text-xs leading-5 font-semibold rounded-full">{{ place.place_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-gray-900">{{ place.created_at }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap flex flex-wrap justify-center items-center gap-2">
+                        <a href="/admin/manage_places/view/{{ place.place_id }}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">View</a>
+                        <a href="/admin/manage_places/edit/{{ place.place_id }}" class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Edit</a>
+                        <a href="/admin/manage_places/delete/{{ place.place_id }}" class="bg-red-700 text-white px-3 py-1 rounded hover:bg-red-800">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{%endblock%}

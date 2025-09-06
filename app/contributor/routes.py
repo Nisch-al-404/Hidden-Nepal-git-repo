@@ -33,9 +33,9 @@ def add_place():
         contributor_id = session.get('user_id')
         image = request.files['image']
 
-        if not contributor_id:
-            flash("You must be logged in to submit a place.")
-            return redirect(url_for('auth.login'))
+        # if not contributor_id:
+        #     flash("You must be logged in to submit a place.")
+        #     return redirect(url_for('auth.login'))
 
         filename = secure_filename(image.filename)
         image_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -59,11 +59,12 @@ def add_place():
 
 
 @contributor_bp.route('/my_contributions')
+@login_required
 def my_contributions():
     user_id = session.get('user_id')
-    if not user_id:
-        flash("Login required")
-        return redirect(url_for('auth.login'))
+    # if not user_id:
+    #     flash("Login required")
+    #     return redirect(url_for('auth.login'))
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -78,13 +79,14 @@ def my_contributions():
 
 #  Edit Place
 @contributor_bp.route('/edit_place/<int:place_id>', methods=['GET', 'POST'])
+@login_required
 def edit_place(place_id):
     place = Place.query.get_or_404(place_id)
 
     # Ensure only the contributor can edit + status is pending
-    if place.contributor_id != session.get('user_id'):
-        flash("Unauthorized access.")
-        return redirect(url_for('contributor.my_contributions'))
+    # if place.contributor_id != session.get('user_id'):
+    #     flash("Unauthorized access.")
+    #     return redirect(url_for('contributor.my_contributions'))
 
     if place.status != "pending":
         flash("You can only edit places that are pending approval.")
@@ -113,13 +115,14 @@ def edit_place(place_id):
 
 #  Delete Place
 @contributor_bp.route('/delete_place/<int:place_id>', methods=['POST'])
+@login_required
 def delete_place(place_id):
     place = Place.query.get_or_404(place_id)
 
     # Ensure only contributor can delete + status is pending
-    if place.contributor_id != session.get('user_id'):
-        flash("Unauthorized access.")
-        return redirect(url_for('contributor.my_contributions'))
+    # if place.contributor_id != session.get('user_id'):
+    #     flash("Unauthorized access.")
+    #     return redirect(url_for('contributor.my_contributions'))
 
     if place.status != "pending":
         flash("You can only delete places that are pending approval.")
@@ -130,16 +133,16 @@ def delete_place(place_id):
     flash("Place deleted successfully.")
     return redirect(url_for('contributor.my_contributions'))
 
-contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
 
 @contributor_bp.route('/profile')
+@login_required
 def profile():
     user_id = session.get('user_id')
-    if not user_id:
-        flash("Please log in to access your profile.")
-        return redirect(url_for('auth.login'))  # adjust if your login route differs
+    # if not user_id:
+    #     flash("Please log in to access your profile.")
+    #     return redirect(url_for('auth.login'))  # adjust if your login route differs
       # Fetch user info if needed
-    return render_template('contributor/profile.html', user=current_user)
+    # return render_template('contributor/profile.html', user=current_user)
     user = User.query.get_or_404(user_id)
 
     # Counts by status for this contributor
@@ -186,3 +189,5 @@ def profile():
 # def contributor_dashboard():
 
 #     return render_template("contributor/contributor_dashboard.html",user=current_user)
+
+contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
