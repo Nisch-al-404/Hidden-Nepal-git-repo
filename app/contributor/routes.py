@@ -130,7 +130,6 @@ def delete_place(place_id):
     flash("Place deleted successfully.")
     return redirect(url_for('contributor.my_contributions'))
 
-contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
 
 @contributor_bp.route('/profile')
 def profile():
@@ -139,7 +138,7 @@ def profile():
         flash("Please log in to access your profile.")
         return redirect(url_for('auth.login'))  # adjust if your login route differs
       # Fetch user info if needed
-    return render_template('contributor/profile.html', user=current_user)
+    # return render_template('contributor/profile.html', user=current_user)
     user = User.query.get_or_404(user_id)
 
     # Counts by status for this contributor
@@ -186,3 +185,11 @@ def profile():
 # def contributor_dashboard():
 
 #     return render_template("contributor/contributor_dashboard.html",user=current_user)
+
+
+
+
+
+#keep it at last
+
+contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
