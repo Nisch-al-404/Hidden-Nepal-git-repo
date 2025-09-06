@@ -1,0 +1,89 @@
+{%extends "admin/layout.html"%}
+{%block title%}View Place - Admin Dashboard{%endblock%}
+
+{%block content%}
+
+<div class="p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">Place Details</h1>
+    <a href="{{ url_for('admin.manage_places') }}" 
+       class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-900 transition">
+       Back to Manage Places
+    </a>
+  </div>
+
+  <!-- Place Info -->
+  <div class="bg-white shadow rounded-xl p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Basic Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <p><span class="font-medium">Name:</span> {{ place.place_name }}</p>
+      <p><span class="font-medium">Status:</span> 
+        <span class="px-2 py-1 rounded-lg text-xs font-semibold 
+          {% if place.status == 'approved' %} bg-green-100 text-green-700 
+          {% elif place.status == 'pending' %} bg-yellow-100 text-yellow-700 
+          {% else %} bg-red-100 text-red-700 {% endif %}">
+          {{ place.status|capitalize }}
+        </span>
+      </p>
+      <p><span class="font-medium">Location:</span> {{ place.location }}</p>
+      <p><span class="font-medium">Coordinates:</span> {{ place.latitude }}, {{ place.longitude }}</p>
+      <p class="col-span-2"><span class="font-medium">Description:</span> {{ place.description }}</p>
+      <p class="text-gray-500 text-xs">Submitted on {{ place.created_at }}</p>
+    </div>
+  </div>
+
+  <!-- Contributor -->
+  <div class="bg-white shadow rounded-xl p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Contributor</h2>
+    <p><span class="font-medium">Name:</span> {{ place.contributor_name }}</p>
+    <p><span class="font-medium">Email:</span> {{ place.contributor_email }}</p>
+  </div>
+
+  <!-- Images -->
+  <div class="bg-white shadow rounded-xl p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Images</h2>
+    {% if images %}
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for img in images %}
+          <div class="relative group">
+            <img src="/static/uploads/{{ img.image_url }}" alt="Place Image" 
+                 class="rounded-lg shadow-md object-cover w-full h-40 transition group-hover:scale-105">
+            <p class="text-xs text-gray-500 mt-1">Uploaded: {{ img.uploaded_at }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500">No images uploaded.</p>
+    {% endif %}
+  </div>
+
+  <!-- Reviews -->
+  <div class="bg-white shadow rounded-xl p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Reviews</h2>
+    {% if reviews %}
+      <div class="space-y-4">
+        {% for review in reviews %}
+          <div class="border-b pb-3">
+            <p class="font-medium">{{ review.username }} 
+              <span class="text-yellow-500">
+                ★ {{ review.rating }}/5
+              </span>
+            </p>
+            <p class="text-gray-700">{{ review.comment }}</p>
+            <p class="text-xs text-gray-500">Reviewed on {{ review.created_at }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500">No reviews yet.</p>
+    {% endif %}
+  </div>
+
+  
+
+</div>
+
+{% endblock %}
+

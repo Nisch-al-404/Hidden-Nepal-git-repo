@@ -28,6 +28,7 @@ def login():
             cursor = conn.cursor(dictionary=True)
 
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            print("Executing query for email:", email)
             user = cursor.fetchone()
 
             if user is None:
@@ -36,8 +37,8 @@ def login():
 
             if user:
                 if user and check_password_hash(user['password_hash'], password):
-                    user_obj = User(user['id'],user['username'], user['email'], user['role'])
-                    login_user(user_obj)
+                    user_obj = User(user['user_id'],user['username'], user['email'], user['role'])
+                    login_user(user_obj, remember=True)
                     flash("🎉 Logged in successfully!", "success")
 
                     if user['role'] == 'admin':
@@ -71,11 +72,10 @@ def register():
         try:
             conn = get_db()
             cursor = conn.cursor()
-            print("Entered:", password)
-            print("Entered:", email)
+           
 
             cursor.execute("""
-                           INSERT INTO users (username, email, password_hash, role, can_contribute)
+                           INSERT INTO users  (username, email, password_hash, role, can_contribute)
                            VALUES (%s, %s, %s, 'contributor', TRUE)
                            """, (username, email, hashed_password))
             conn.commit()
