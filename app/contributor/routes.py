@@ -138,7 +138,8 @@ def profile():
     if not user_id:
         flash("Please log in to access your profile.")
         return redirect(url_for('auth.login'))  # adjust if your login route differs
-
+      # Fetch user info if needed
+    return render_template('contributor/profile.html', user=current_user)
     user = User.query.get_or_404(user_id)
 
     # Counts by status for this contributor
