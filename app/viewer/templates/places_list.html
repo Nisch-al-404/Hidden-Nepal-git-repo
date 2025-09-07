@@ -1,0 +1,107 @@
+{% extends "layout.html" %} {% block content %}
+<h1 class="text-3xl font-bold mb-6 text-center text-blue-700">All Places</h1>
+
+<form
+  id="searchForm"
+  class="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center"
+>
+  <input
+    type="text"
+    id="searchInput"
+    name="q"
+    placeholder="Search places..."
+    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-64"
+  />
+  <select
+    id="filterStatus"
+    name="status"
+    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
+  >
+    <option value="">All Status</option>
+    <option value="approved">Approved</option>
+    <option value="pending">Pending</option>
+    <option value="rejected">Rejected</option>
+  </select>
+  <button
+    type="submit"
+    class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+  >
+    Search/Filter
+  </button>
+</form>
+
+<div
+  id="placesGrid"
+  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
+>
+  {% for place in places %}
+  <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+    <img
+      src="{{ place.image_url }}"
+      alt="Image"
+      class="w-full h-64 object-cover"
+    />
+    <div class="p-4 flex-1 flex flex-col justify-between">
+      <div>
+        <a
+          href="/places/{{ place.id }}"
+          class="text-lg font-semibold mb-2 text-blue-700 hover:underline"
+          >{{ place.name }}</a
+        >
+        <p class="text-gray-600">{{ place.description|truncate(100) }}</p>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-span-full text-center text-gray-500">No places found.</div>
+  {% endfor %}
+</div>
+
+<script>
+  const form = document.getElementById("searchForm");
+  const grid = document.getElementById("placesGrid");
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const q = document.getElementById("searchInput").value;
+    const status = document.getElementById("filterStatus").value;
+    let url = "";
+    if (q) {
+      url = `/api/search?q=${encodeURIComponent(q)}`;
+    } else if (status) {
+      url = `/api/filter?status=${encodeURIComponent(status)}`;
+    } else {
+      url = "/api/filter?status=approved";
+    }
+    const res = await fetch(url);
+    const places = await res.json();
+    let html = "";
+    if (places.length === 0) {
+      html =
+        '<div class="col-span-full text-center text-gray-500">No places found.</div>';
+    } else {
+      for (const place of places) {
+        html += `
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+          <img src="${
+            place.image_url
+          }" alt="Image" class="w-full h-64 object-cover" />
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <a href="/places/${
+                place.id
+              }" class="text-lg font-semibold mb-2 text-blue-700 hover:underline">${
+          place.name
+        }</a>
+              <p class="text-gray-600">${place.description.substring(0, 100)}${
+          place.description.length > 100 ? "..." : ""
+        }</p>
+            </div>
+          </div>
+        </div>
+      `;
+      }
+    }
+    grid.innerHTML = html;
+  });
+</script>
+{% endblock %}

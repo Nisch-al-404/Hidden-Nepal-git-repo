@@ -11,28 +11,33 @@ def get_db():
     )
 
 class User(UserMixin):
-    def __init__(self, id,name, email, role):
-        self.id = id
+    def __init__(self, user_id,name, email, role):
+      
+        self.id = user_id
         self.name = name
         self.email = email
         self.role = role
 
-
-
-# Image model and fetch function
-class Image:
-    def __init__(self, id, image_url, description, weather, temperature):
-        self.id = id
-        self.image_url = image_url
+# Add Place Model
+class Place:
+    def __init__(self, name, description, latitude, longitude, image_url, contributor_id, status, created_at):
+       
+        self.name = name
         self.description = description
-        self.weather = weather
-        self.temperature = temperature
-
-def get_images():
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, image_url, description, weather, temperature FROM images")
-    images = [Image(**row) for row in cursor.fetchall()]
-    cursor.close()
-    conn.close()
-    return images
+        self.latitude = latitude
+        self.longitude = longitude
+        self.image_url = image_url
+        self.contributor_id = contributor_id
+        self.status = status
+        self.created_at = created_at
+    def save(self):
+        db = get_db()
+        cursor = db.cursor()
+        query = """
+        INSERT INTO places (name, description, latitude, longitude, image_url, contributor_id, status, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (self.name, self.description, self.latitude, self.longitude,self.image_url, self.contributor_id, self.status, self.created_at))
+        db.commit()
+        cursor.close()
+        db.close()    
