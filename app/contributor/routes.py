@@ -129,6 +129,9 @@ def delete_place(place_id):
     get_db.session.commit()
     flash("Place deleted successfully.")
     return redirect(url_for('contributor.my_contributions'))
+#profile#
+
+
 
 
 @contributor_bp.route('/profile')
@@ -136,46 +139,53 @@ def profile():
     user_id = session.get('user_id')
     if not user_id:
         flash("Please log in to access your profile.")
-        return redirect(url_for('auth.login'))  # adjust if your login route differs
-      # Fetch user info if needed
-    # return render_template('contributor/profile.html', user=current_user)
-    user = User.query.get_or_404(user_id)
+        return redirect(url_for('auth.login'))
 
-    # Counts by status for this contributor
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    # Get user info
+    cursor.execute("SELECT id, username, email, created_at FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+
+    # Counts by status
     cursor.execute("""
-        SELECT status, COUNT(id) as count
-        FROM places
-        WHERE contributor_id = %s
+        SELECT status, COUNT(*) as count 
+        FROM places 
+        WHERE contributor_id = %s 
         GROUP BY status
     """, (user_id,))
-    raw_counts = cursor.fetchall()
+    rows = cursor.fetchall()
 
-    counts = {'pending': 0, 'approved': 0, 'rejected': 0}
-    for row in raw_counts:
-        status = row['status']
-        count = row['count']
+    counts = {"pending": 0, "approved": 0, "rejected": 0}
+    for row in rows:
+        status = row["status"]
         if status in counts:
-            counts[status] = count
+            counts[status] = row["count"]
 
-    total = counts['pending'] + counts['approved'] + counts['rejected']
+    total = sum(counts.values())
 
-    recent = (
-        Place.query
-        .filter_by(contributor_id=user_id)
-        .order_by(Place.created_at.desc())
-        .limit(5)
-        .all()
-    )
+    # Recent submissions (last 5)
+    cursor.execute("""
+        SELECT id, name, status, created_at 
+        FROM places 
+        WHERE contributor_id = %s 
+        ORDER BY created_at DESC 
+        LIMIT 5
+    """, (user_id,))
+    recent = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
 
     return render_template(
-        'contributor/profile.html',
+        "contributor/profile.html",
         user=user,
         counts=counts,
         total=total,
         recent=recent
     )
+
 
 # Uncomment the following lines if you want to use the contributor dashboard route
 
@@ -192,4 +202,4 @@ def profile():
 
 #keep it at last
 
-contributor_bp = Blueprint('contributor', __name__, template_folder='templates')
+#contributor_bp = Blueprint('contributor', __name__, template_folder='templates')#
