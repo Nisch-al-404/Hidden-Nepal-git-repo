@@ -4,6 +4,84 @@ import requests
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+# Advanced filter: by region, category, rating
+@api_bp.route('/places/advanced_filter')
+def advanced_filter():
+    region = request.args.get('region')
+    category = request.args.get('category')
+    min_rating = request.args.get('min_rating', type=float)
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT * FROM places WHERE 1=1"
+    params = []
+    if region:
+        query += " AND region = %s"
+        params.append(region)
+    if category:
+        query += " AND category = %s"
+        params.append(category)
+    if min_rating is not None:
+        query += " AND rating >= %s"
+        params.append(min_rating)
+    cursor.execute(query, tuple(params))
+    results = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return jsonify(results)
+
+# Favorites: add/remove, get user's favorites (user_id required)
+@api_bp.route('/favorites', methods=['GET', 'POST', 'DELETE'])
+def favorites():
+    user_id = request.args.get('user_id', type=int)
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    if request.method == 'GET':
+        cursor.execute("SELECT p.* FROM favorites f JOIN places p ON f.place_id = p.id WHERE f.user_id = %s", (user_id,))
+        results = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return jsonify(results)
+    elif request.method == 'POST':
+        place_id = request.json.get('place_id')
+        cursor.execute("INSERT IGNORE INTO favorites (user_id, place_id) VALUES (%s, %s)", (user_id, place_id))
+        db.commit()
+        cursor.close()
+        db.close()
+        return jsonify({'message': 'Added to favorites'})
+    elif request.method == 'DELETE':
+        place_id = request.json.get('place_id')
+        cursor.execute("DELETE FROM favorites WHERE user_id = %s AND place_id = %s", (user_id, place_id))
+        db.commit()
+        cursor.close()
+        db.close()
+        return jsonify({'message': 'Removed from favorites'})
+
+# Reviews: get/add for a place
+@api_bp.route('/reviews/<int:place_id>', methods=['GET', 'POST'])
+def reviews(place_id):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    if request.method == 'GET':
+        cursor.execute("SELECT * FROM reviews WHERE place_id = %s ORDER BY created_at DESC", (place_id,))
+        results = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return jsonify(results)
+    elif request.method == 'POST':
+        user_id = request.json.get('user_id')
+        rating = request.json.get('rating')
+        comment = request.json.get('comment')
+        cursor.execute("INSERT INTO reviews (place_id, user_id, rating, comment) VALUES (%s, %s, %s, %s)", (place_id, user_id, rating, comment))
+        db.commit()
+        cursor.close()
+        db.close()
+        return jsonify({'message': 'Review added'})
+from flask import Blueprint, jsonify, request
+from app.models import get_db
+import requests
+
+api_bp = Blueprint('api', __name__, url_prefix='/api')
+
 OPENWEATHER_API_KEY = "5d5c9b97d149189cce63766618482c70"
 
 # Search places by name or description
