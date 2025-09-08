@@ -22,6 +22,17 @@
     <option value="pending">Pending</option>
     <option value="rejected">Rejected</option>
   </select>
+  <select
+    id="filterCategory"
+    name="category"
+    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
+  >
+    <option value="">All Categories</option>
+    <option value="Temple">Temple</option>
+    <option value="Hiking">Hiking</option>
+    <option value="Nature">Nature</option>
+    <option value="Culture">Culture</option>
+  </select>
   <button
     type="submit"
     class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
@@ -29,48 +40,65 @@
     Search/Filter
   </button>
 </form>
+<!-- Location/Radius UI -->
+<div class="flex flex-col sm:flex-row items-center gap-4 mb-6">
+  <label class="font-semibold text-blue-700"
+    >Highlight places within
+    <select id="radiusSelect" class="mx-2 px-2 py-1 border rounded">
+      <option value="0.5">500m</option>
+      <option value="1">1km</option>
+      <option value="2">2km</option>
+      <option value="5">5km</option>
+      <option value="10">10km</option>
+    </select>
+    radius of
+    <button
+      id="getLocationBtn"
+      class="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+    >
+      My Location
+    </button>
+  </label>
+</div>
 
 <div
   id="placesGrid"
   class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
->
-  {% for place in places %}
-  <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
-    <img
-      src="{{ place.image_url }}"
-      alt="Image"
-      class="w-full h-64 object-cover"
-    />
-    <div class="p-4 flex-1 flex flex-col justify-between">
-      <div>
-        <a
-          href="/places/{{ place.id }}"
-          class="text-lg font-semibold mb-2 text-blue-700 hover:underline"
-          >{{ place.name }}</a
-        >
-        <p class="text-gray-600">{{ place.description|truncate(100) }}</p>
-      </div>
-    </div>
-  </div>
-  {% else %}
-  <div class="col-span-full text-center text-gray-500">No places found.</div>
-  {% endfor %}
-</div>
+></div>
 
 <script>
-  const form = document.getElementById("searchForm");
-  const grid = document.getElementById("placesGrid");
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
+  // --- User Location and Radius ---
+  let userLocation = null;
+  let userRadius = 0.5; // default in km
+
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  async function loadPlaces() {
     const q = document.getElementById("searchInput").value;
     const status = document.getElementById("filterStatus").value;
-    let url = "";
+    const category = document.getElementById("filterCategory").value;
+    let url = "/api/filter?status=approved";
     if (q) {
       url = `/api/search?q=${encodeURIComponent(q)}`;
     } else if (status) {
       url = `/api/filter?status=${encodeURIComponent(status)}`;
-    } else {
-      url = "/api/filter?status=approved";
+    }
+    if (category) {
+      url +=
+        (url.includes("?") ? "&" : "?") +
+        `category=${encodeURIComponent(category)}`;
     }
     const res = await fetch(url);
     const places = await res.json();
@@ -80,8 +108,20 @@
         '<div class="col-span-full text-center text-gray-500">No places found.</div>';
     } else {
       for (const place of places) {
+        let highlight = false;
+        if (userLocation && place.latitude && place.longitude) {
+          const dist = getDistanceFromLatLonInKm(
+            userLocation.lat,
+            userLocation.lng,
+            place.latitude,
+            place.longitude
+          );
+          if (dist <= userRadius) highlight = true;
+        }
         html += `
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ${
+          highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
+        }">
           <img src="${
             place.image_url
           }" alt="Image" class="w-full h-64 object-cover" />
@@ -92,16 +132,47 @@
               }" class="text-lg font-semibold mb-2 text-blue-700 hover:underline">${
           place.name
         }</a>
-              <p class="text-gray-600">${place.description.substring(0, 100)}${
-          place.description.length > 100 ? "..." : ""
-        }</p>
+              <p class="text-gray-600">${
+                place.description
+                  ? place.description.substring(0, 100) +
+                    (place.description.length > 100 ? "..." : "")
+                  : ""
+              }</p>
             </div>
           </div>
         </div>
       `;
       }
     }
-    grid.innerHTML = html;
-  });
+    document.getElementById("placesGrid").innerHTML = html;
+  }
+
+  function askLocationAndReload() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        userLocation = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        loadPlaces();
+      });
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  }
+
+  function onRadiusChange(e) {
+    userRadius = parseFloat(e.target.value);
+    loadPlaces();
+  }
+
+  document.getElementById("searchForm").onsubmit = function (e) {
+    e.preventDefault();
+    loadPlaces();
+  };
+  document.getElementById("getLocationBtn").onclick = askLocationAndReload;
+  document.getElementById("radiusSelect").onchange = onRadiusChange;
+
+  window.onload = loadPlaces;
 </script>
 {% endblock %}
