@@ -16,13 +16,13 @@ def create_app():
     def load_user(user_id):
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
 
         if user:
-            return User(user['id'],user['username'], user['email'], user['role'])
+            return User(user['user_id'],user['username'], user['email'], user['role'])
         return None
 
     from .admin import admin_bp

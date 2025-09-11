@@ -1,0 +1,67 @@
+{% extends "contributor/contributor_layout.html" %}
+{% block content %}
+<section class="bg-gray-50 min-h-screen py-10 px-4">
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    <!-- User Info -->
+    <div class="bg-white rounded-2xl shadow-md p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">👤 Profile</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+        <p><span class="font-semibold">Username:</span> {{ user.username }}</p>
+        <p><span class="font-semibold">Email:</span> {{ user.email }}</p>
+        <p class="sm:col-span-2"><span class="font-semibold">Joined:</span> {{ user.created_at.strftime('%B %d, %Y') }}</p>
+      </div>
+    </div>
+
+    <!-- Contribution Stats -->
+    <div class="bg-white rounded-2xl shadow-md p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Contribution Stats</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+        <div class="p-4 bg-yellow-100 rounded-lg">
+          <p class="text-2xl font-bold text-yellow-700">{{ counts.pending }}</p>
+          <p class="text-gray-600">Pending</p>
+        </div>
+        <div class="p-4 bg-green-100 rounded-lg">
+          <p class="text-2xl font-bold text-green-700">{{ counts.approved }}</p>
+          <p class="text-gray-600">Approved</p>
+        </div>
+        <div class="p-4 bg-red-100 rounded-lg">
+          <p class="text-2xl font-bold text-red-700">{{ counts.rejected }}</p>
+          <p class="text-gray-600">Rejected</p>
+        </div>
+        <div class="p-4 bg-blue-100 rounded-lg">
+          <p class="text-2xl font-bold text-blue-700">{{ total }}</p>
+          <p class="text-gray-600">Total</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="bg-white rounded-2xl shadow-md p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">🕒 Recent Submissions</h2>
+      {% if recent %}
+        <ul class="divide-y divide-gray-200">
+          {% for place in recent %}
+            <li class="py-3 flex justify-between items-center">
+              <div>
+                <p class="font-medium text-gray-800">{{ place.name }}</p>
+                <p class="text-sm text-gray-500">{{ place.created_at.strftime('%B %d, %Y') }}</p>
+              </div>
+              <span class="px-3 py-1 text-sm rounded-full 
+                {% if place.status == 'approved' %} bg-green-100 text-green-700
+                {% elif place.status == 'pending' %} bg-yellow-100 text-yellow-700
+                {% else %} bg-red-100 text-red-700
+                {% endif %}">
+                {{ place.status | capitalize }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-600">No submissions yet.</p>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}
