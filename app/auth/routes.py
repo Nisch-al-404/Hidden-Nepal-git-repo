@@ -15,7 +15,7 @@ def login():
     if current_user.is_authenticated:
         if current_user.role == 'admin':
             return redirect(url_for('admin.admin_panel'))
-        return redirect(url_for('contributor.contributor_dashboard'))
+        return redirect(url_for('contributor.my_contributions'))
 
     if request.method == 'POST':
 
@@ -25,7 +25,9 @@ def login():
         conn=None
         cursor=None
         try:
+            print("Attempting to connect to the database...")
             conn = get_db()
+            print(conn)
             cursor = conn.cursor(dictionary=True)
 
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
@@ -77,7 +79,7 @@ def register():
 
             cursor.execute("""
                            INSERT INTO users  (username, email, password_hash, role, can_contribute)
-                           VALUES (%s, %s, %s, 'contributor', TRUE)
+                           VALUES (%s, %s, %s, 'admin', TRUE)
                            """, (username, email, hashed_password))
             conn.commit()
             flash("🎉 Registered successfully!", "success")

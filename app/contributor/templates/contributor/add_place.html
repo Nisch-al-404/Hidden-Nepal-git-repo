@@ -1,72 +1,121 @@
- <!DOCTYPE html>
-<html>
-<head>
-    <title>Add Place</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-    <style>
-        #map {
-            height: 300px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <h2>Submit a New Place</h2>
+{% extends "contributor/contributor_layout.html" %}
+{% block content %}
 
+
+
+<section class="bg-gray-50 min-h-screen flex items-center justify-center">
+   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 300px;
+      border-radius: 0.5rem;
+    }
+  </style>
+  <div class="w-full max-w-3xl bg-white shadow-lg rounded-2xl p-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Submit a New Place</h2>
+
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <ul>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-        </ul>
+        <div class="mb-4">
+          {% for message in messages %}
+            <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg mb-2">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
-    <form method="POST" enctype="multipart/form-data">
-        <label>Place Name:</label><br>
-        <input type="text" name="name" required><br><br>
+    <!-- Form -->
+    <form method="POST" enctype="multipart/form-data" class="space-y-5">
+      <!-- Place Name -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Place Name</label>
+        <input type="text" name="name" required
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      </div>
 
-        <label>Description:</label><br>
-        <textarea name="description" required></textarea><br><br>
+      <!-- Description -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Description</label>
+        <textarea name="description" required rows="4"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+      </div>
 
-        <label>Latitude:</label><br>
-        <input type="text" id="latitude" name="latitude" readonly required><br><br>
+      <!-- Location (optional free text) -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Location</label>
+        <input type="text" name="location"
+          placeholder="e.g. Palpa, Nepal"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      </div>
 
-        <label>Longitude:</label><br>
-        <input type="text" id="longitude" name="longitude" readonly required><br><br>
+      <!-- Coordinates -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Latitude</label>
+          <input type="text" id="latitude" name="latitude" readonly required
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Longitude</label>
+          <input type="text" id="longitude" name="longitude" readonly required
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed">
+        </div>
+      </div>
 
-        <div id="map"></div>
+      <!-- Map -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Select Location on Map</label>
+        <div id="map" class="w-full"></div>
+      </div>
 
-        <label>Upload Image:</label><br>
-        <input type="file" name="image" accept="image/*" required><br><br>
+      <!-- Images -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Upload Images</label>
+        <input type="file" name="images" accept="image/*" multiple required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4
+                 file:rounded-full file:border-0 file:text-sm file:font-semibold
+                 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+        <p class="text-sm text-gray-500 mt-1">You can upload multiple images</p>
+      </div>
 
-        <button type="submit">Submit Place</button>
+      <!-- Submit Button -->
+      <div class="text-center">
+        <button type="submit"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition">
+          Submit Place
+        </button>
+      </div>
     </form>
+  </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script>
-        const map = L.map('map').setView([27.7, 85.3], 7); // Default center (Nepal)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([27.7, 85.3], 7); // Default center (Nepal)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-        let marker;
-        map.on('click', function(e) {
-            const lat = e.latlng.lat.toFixed(6);
-            const lng = e.latlng.lng.toFixed(6);
+    let marker;
+    map.on('click', function(e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
 
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lng;
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
 
-            if (marker) {
-                marker.setLatLng(e.latlng);
-            } else {
-                marker = L.marker(e.latlng).addTo(map);
-            }
-        });
-    </script>
-</body>
-</html>
-<!-- This HTML file is for adding a new place with a map interface to select latitude and longitude. -->
-<!-- It includes a form for place name, description, latitude, longitude, and image upload.
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+    });
+  </script>
+<section>
+
+
+{% endblock %}

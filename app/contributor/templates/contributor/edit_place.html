@@ -1,39 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Place</title>
+{% extends "contributor/contributor_layout.html" %}
+{% block content %}
+<section class="bg-gray-100 min-h-screen py-10 px-4 flex items-center justify-center">
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            ✏️ Edit Place – {{ place.name }}
+        </h2>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            <!-- Place Name -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">Place Name</label>
+                <input type="text" name="name" value="{{ place.name }}" required
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">Description</label>
+                <textarea name="description" required rows="4"
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">{{ place.description }}</textarea>
+            </div>
+
+            <!-- Coordinates -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Latitude</label>
+                    <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}" readonly required
+                        class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Longitude</label>
+                    <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}" readonly required
+                        class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600">
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">Select Location</label>
+                <div id="map" class="w-full h-72 rounded-lg shadow border"></div>
+            </div>
+
+            <!-- Current Image -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">Current Image</label>
+                <img src="/{{ place.image_url }}" alt="Place Image"
+                    class="rounded-lg shadow-md w-40 h-28 object-cover">
+            </div>
+
+            <!-- Upload New Image -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">Upload New Image (optional)</label>
+                <input type="file" name="image" accept="image/*"
+                    class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit"
+                    class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium shadow hover:bg-indigo-700 transition duration-200">
+                    ✅ Update Place
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Leaflet JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-    <style>
-        #map { height: 300px; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <h2>Edit Place: {{ place.name }}</h2>
-
-    <form method="POST" enctype="multipart/form-data">
-        <label>Place Name:</label><br>
-        <input type="text" name="name" value="{{ place.name }}" required><br><br>
-
-        <label>Description:</label><br>
-        <textarea name="description" required>{{ place.description }}</textarea><br><br>
-
-        <label>Latitude:</label><br>
-        <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}" readonly required><br><br>
-
-        <label>Longitude:</label><br>
-        <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}" readonly required><br><br>
-
-        <div id="map"></div>
-
-        <label>Current Image:</label><br>
-        <img src="/{{ place.image_url }}" alt="Place Image" width="150"><br><br>
-
-        <label>Upload New Image (optional):</label><br>
-        <input type="file" name="image" accept="image/*"><br><br>
-
-        <button type="submit">Update Place</button>
-    </form>
-
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script>
         const map = L.map('map').setView(
@@ -49,7 +82,7 @@
             parseFloat('{{ place.longitude|default(0) }}')
         ]).addTo(map);
 
-        map.on('click', function(e) {
+        map.on('click', function (e) {
             const lat = e.latlng.lat.toFixed(6);
             const lng = e.latlng.lng.toFixed(6);
 
@@ -59,5 +92,7 @@
             marker.setLatLng(e.latlng);
         });
     </script>
-</body>
-</html>
+</section>
+{% endblock %}
+
+

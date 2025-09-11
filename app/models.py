@@ -3,12 +3,14 @@ from flask_login import UserMixin
 
 
 def get_db():
+    print("Connecting to the database...")
     return mysql.connector.connect(
         host="localhost",
         user="root",               # Default XAMPP user
-        password="root1234",               # Default: empty (no password)
+        password="rOoT@12#3",               # Default: empty (no password)
         database="Project2"    # Your database name in phpMyAdmin
     )
+
 
 
 
@@ -20,7 +22,7 @@ class User(UserMixin):
         self.email = email
         self.role = role
 
-#Add Place Model
+# Add Place Model
 class Place:
     def __init__(self, name, description, latitude, longitude, image_url, contributor_id, status, created_at):
        
@@ -44,4 +46,4 @@ class Place:
         db.commit()
         cursor.close()
         db.close()    
-# contribute1@gmail.com contribute1
+# # contribute1@gmail.com contribute1
