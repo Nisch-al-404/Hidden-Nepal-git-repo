@@ -159,17 +159,15 @@ def edit_place(place_id):
 # Delete Place
 # ----------------------
 @contributor_bp.route('/delete_place/<int:place_id>', methods=['POST'])
+@login_required
 def delete_place(place_id):
     user_id = session.get('user_id')
-    if not user_id:
-        flash("Please log in first.")
-        return redirect(url_for('auth.login'))
 
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
     # Fetch place
-    cursor.execute("SELECT id, contributor_id, status FROM places WHERE id = %s", (place_id,))
+    cursor.execute("SELECT * FROM places WHERE place_id = %s", (place_id,))
     place = cursor.fetchone()
 
     if not place:
@@ -177,7 +175,7 @@ def delete_place(place_id):
         return redirect(url_for('contributor.my_contributions'))
 
     # Ensure only contributor can delete + status is pending
-    if place['contributor_id'] != user_id:
+    if place['submitted_by'] != current_user.id:
         flash("Unauthorized access.")
         return redirect(url_for('contributor.my_contributions'))
 
@@ -186,7 +184,7 @@ def delete_place(place_id):
         return redirect(url_for('contributor.my_contributions'))
 
     # Delete the place
-    cursor.execute("DELETE FROM places WHERE id = %s", (place_id,))
+    cursor.execute("DELETE FROM places WHERE place_id = %s", (place_id,))
     conn.commit()
 
     cursor.close()
@@ -194,12 +192,12 @@ def delete_place(place_id):
 
     flash("Place deleted successfully.")
     return redirect(url_for('contributor.my_contributions'))
-
-
 # ----------------------
 # Profile Page
 # ----------------------
+# Contributor Profile
 @contributor_bp.route('/profile')
+@login_required
 def profile():
     user_id = session.get('user_id')
     if not user_id:
@@ -214,7 +212,7 @@ def profile():
         SELECT id, username, email, created_at 
         FROM users 
         WHERE id = %s
-    """, (user_id,))
+    """, (int(user_id),))
     user = cursor.fetchone()
 
     if not user:
@@ -227,7 +225,7 @@ def profile():
         FROM places 
         WHERE contributor_id = %s 
         GROUP BY status
-    """, (user_id,))
+    """, (int(user_id),))
     rows = cursor.fetchall()
 
     counts = {"pending": 0, "approved": 0, "rejected": 0}
@@ -244,7 +242,7 @@ def profile():
         WHERE contributor_id = %s 
         ORDER BY created_at DESC 
         LIMIT 5
-    """, (user_id,))
+    """, (int(user_id),))
     recent = cursor.fetchall()
 
     cursor.close()
@@ -257,6 +255,8 @@ def profile():
         total=total,
         recent=recent
     )
+
+
 
 
 
