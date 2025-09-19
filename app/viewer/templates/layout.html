@@ -11,6 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
+
     <style>
       body,
       html {
@@ -126,7 +127,7 @@
     <div class="flex flex-1 w-full">
       <!-- Sidebar -->
       <aside
-        id="sidebar"
+        id="explore-sidebar"
         class="hidden md:block w-64 bg-white shadow-lg rounded-lg p-6 mr-8 mt-8 h-max sticky top-28 self-start"
       >
         <h2 class="text-xl font-bold mb-4 text-blue-700">Explore</h2>
@@ -182,32 +183,40 @@
               <a
                 href="#"
                 class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Temple')"
-                >Temple</a
+                onclick="filterCategory('Temples & Heritage')"
+                >Temples & Heritage</a
               >
             </li>
             <li>
               <a
                 href="#"
                 class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Hiking')"
-                >Hiking</a
+                onclick="filterCategory('Lakes & Rivers')"
+                >Lakes & Rivers</a
               >
             </li>
             <li>
               <a
                 href="#"
                 class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Nature')"
-                >Nature</a
+                onclick="filterCategory('Hiking & Trekking')"
+                >Hiking & Trekking</a
               >
             </li>
             <li>
               <a
                 href="#"
                 class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Culture')"
-                >Culture</a
+                onclick="filterCategory('National Parks & Wildlife')"
+                >National Parks & Wildlife</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
+                onclick="filterCategory('Cultural Experiences')"
+                >Cultural Experiences</a
               >
             </li>
           </ul>
@@ -352,19 +361,39 @@
           <div class="font-bold mb-2 text-pink-700">Categories</div>
           <ul class="space-y-1">
             <li>
-              <a href="#" class="hover:text-pink-600">Temples & Heritage</a>
+              <a
+                href="/places?category=Temples%20%26%20Heritage"
+                class="hover:text-pink-600"
+                >Temples & Heritage</a
+              >
             </li>
-            <li><a href="#" class="hover:text-pink-600">Lakes & Rivers</a></li>
             <li>
-              <a href="#" class="hover:text-pink-600">Hiking & Trekking</a>
+              <a
+                href="/places?category=Lakes%20%26%20Rivers"
+                class="hover:text-pink-600"
+                >Lakes & Rivers</a
+              >
             </li>
             <li>
-              <a href="#" class="hover:text-pink-600"
+              <a
+                href="/places?category=Hiking%20%26%20Trekking"
+                class="hover:text-pink-600"
+                >Hiking & Trekking</a
+              >
+            </li>
+            <li>
+              <a
+                href="/places?category=National%20Parks%20%26%20Wildlife"
+                class="hover:text-pink-600"
                 >National Parks & Wildlife</a
               >
             </li>
             <li>
-              <a href="#" class="hover:text-pink-600">Cultural Experiences</a>
+              <a
+                href="/places?category=Cultural%20Experiences"
+                class="hover:text-pink-600"
+                >Cultural Experiences</a
+              >
             </li>
           </ul>
         </div>

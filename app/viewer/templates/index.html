@@ -1,240 +1,220 @@
 {% extends "layout.html" %} {% block content %}
-<h1 class="text-3xl font-bold mb-6 text-center text-blue-700">
-  <div
-    id="placesGrid"
-    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
-  ></div>
+<div
+  id="placesGrid"
+  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
+></div>
 
-  <!-- Modal for Place Details -->
-  <div
-    id="detailsModal"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
-  >
-    <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-      <button
-        onclick="closeModal()"
-        class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl"
-      >
-        &times;
-      </button>
-      <div id="modalContent">Loading...</div>
-    </div>
+<!-- Modal for Place Details -->
+<div
+  id="detailsModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+  <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+    <button
+      onclick="closeModal()"
+      class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl"
+    >
+      &times;
+    </button>
+    <div id="modalContent">Loading...</div>
   </div>
+</div>
 
-  <script>
-    let userId = null; // Set this to the logged-in user's ID if available
-
-    // --- User Location and Radius (sync with sidebar) ---
-    let userLocation = null;
-    let userRadius = 0.5; // default in km
-
-    // Allow sidebar to update these and reload
-    window.setUserLocationAndReload = function (loc, radius) {
-      if (loc) userLocation = loc;
-      if (radius) userRadius = radius;
-      loadPlaces();
-    };
-
-    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-      const R = 6371; // Radius of the earth in km
-      const dLat = ((lat2 - lat1) * Math.PI) / 180;
-      const dLon = ((lon2 - lon1) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((lat1 * Math.PI) / 180) *
-          Math.cos((lat2 * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c; // Distance in km
-    }
-
-    async function loadPlaces() {
-      const res = await fetch("/api/filter?status=approved");
-      const places = await res.json();
-      let html = "";
-      for (const place of places) {
-        let highlight = false;
-        if (userLocation && place.latitude && place.longitude) {
-          const dist = getDistanceFromLatLonInKm(
-            userLocation.lat,
-            userLocation.lng,
-            place.latitude,
-            place.longitude
-          );
-          if (dist <= userRadius) highlight = true;
-        }
-        html += `
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative group ${
-          highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
-        }">
-          <img src="${
-            place.image_url
-          }" alt="Image" class="w-full h-64 object-cover" />
-          <button onclick="toggleFavorite(event, ${
-            place.id
-          })" class="absolute top-3 right-3 z-10 text-2xl text-gray-400 hover:text-red-500 group-hover:scale-110 transition-transform">
-            <span id="fav-icon-${place.id}">♡</span>
-          </button>
-          <div class="p-4 flex-1 flex flex-col justify-between">
-            <div>
-              <h2 class="text-lg font-semibold mb-2 text-blue-700">${
-                place.name
-              }</h2>
-              <p class="text-gray-600 mb-2">${
-                place.description
-                  ? place.description.substring(0, 100) +
-                    (place.description.length > 100 ? "..." : "")
-                  : ""
-              }</p>
-              <div class="flex items-center gap-2 mb-2">
-                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">${
-                  place.category || ""
-                }</span>
-                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">${
-                  place.region || ""
-                }</span>
-              </div>
-              <div class="flex items-center gap-1 mb-2">
-                <span class="text-yellow-400">${"★".repeat(
-                  Math.round(place.rating || 0)
-                )}${"☆".repeat(5 - Math.round(place.rating || 0))}</span>
-                <span class="text-xs text-gray-500">${
-                  place.rating ? place.rating.toFixed(1) : "No rating"
-                }</span>
-              </div>
-              <button onclick="viewDetails(event, ${
-                place.id
-              })" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
+<script>
+  let userId = null; // Set this to the logged-in user's ID if available
+  let userLocation = null;
+  let userRadius = 0.5; // default in km
+  window.setUserLocationAndReload = function (loc, radius) {
+    if (loc) userLocation = loc;
+    if (radius) userRadius = radius;
+    loadPlaces();
+  };
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+  async function loadPlaces() {
+    const res = await fetch("/api/filter?status=approved");
+    const places = await res.json();
+    let html = "";
+    for (const place of places) {
+      let highlight = false;
+      if (userLocation && place.latitude && place.longitude) {
+        const dist = getDistanceFromLatLonInKm(
+          userLocation.lat,
+          userLocation.lng,
+          place.latitude,
+          place.longitude
+        );
+        if (dist <= userRadius) highlight = true;
+      }
+      html += `
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative group ${
+        highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
+      }">
+        <img src="${
+          place.image_url
+        }" alt="Image" class="w-full h-64 object-cover" />
+        <button onclick="toggleFavorite(event, ${
+          place.id
+        })" class="absolute top-3 right-3 z-10 text-2xl text-gray-400 hover:text-red-500 group-hover:scale-110 transition-transform">
+          <span id="fav-icon-${place.id}">♡</span>
+        </button>
+        <div class="p-4 flex-1 flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-semibold mb-2 text-blue-700">${
+              place.name
+            }</h2>
+            <p class="text-gray-600 mb-2">${
+              place.description
+                ? place.description.substring(0, 100) +
+                  (place.description.length > 100 ? "..." : "")
+                : ""
+            }</p>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">${
+                place.category || ""
+              }</span>
+              <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">${
+                place.region || ""
+              }</span>
             </div>
+            <div class="flex items-center gap-1 mb-2">
+              <span class="text-yellow-400">${"★".repeat(
+                Math.round(place.rating || 0)
+              )}${"☆".repeat(5 - Math.round(place.rating || 0))}</span>
+              <span class="text-xs text-gray-500">${
+                place.rating ? place.rating.toFixed(1) : "No rating"
+              }</span>
+            </div>
+            <button onclick="viewDetails(event, ${
+              place.id
+            })" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
           </div>
         </div>
-      `;
-      }
-      document.getElementById("placesGrid").innerHTML = html;
+      </div>
+    `;
     }
-
-    // --- UI for radius and location ---
-    function askLocationAndReload() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (pos) {
-          userLocation = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          };
-          loadPlaces();
-        });
-      } else {
-        alert("Geolocation is not supported by your browser.");
+    document.getElementById("placesGrid").innerHTML = html;
+  }
+  function askLocationAndReload() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        userLocation = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        loadPlaces();
+      });
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  }
+  function onRadiusChange(e) {
+    userRadius = parseFloat(e.target.value);
+    loadPlaces();
+  }
+  async function toggleFavorite(e, placeId) {
+    e.stopPropagation();
+    if (!userId) {
+      alert("Please log in to save favorites.");
+      return;
+    }
+    const icon = document.getElementById(`fav-icon-${placeId}`);
+    if (icon.textContent === "♡") {
+      await fetch(`/api/favorites?user_id=${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ place_id: placeId }),
+      });
+      icon.textContent = "♥";
+      icon.classList.add("text-red-500");
+    } else {
+      await fetch(`/api/favorites?user_id=${userId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ place_id: placeId }),
+      });
+      icon.textContent = "♡";
+      icon.classList.remove("text-red-500");
+    }
+  }
+  async function viewDetails(e, id) {
+    e.stopPropagation();
+    const modal = document.getElementById("detailsModal");
+    const content = document.getElementById("modalContent");
+    modal.classList.remove("hidden");
+    content.innerHTML = "Loading...";
+    const res = await fetch(`/places/${id}`);
+    const html = await res.text();
+    const match = html.match(/<main[\s\S]*?>([\s\S]*?)<\/main>/);
+    content.innerHTML = match ? match[1] : html;
+    loadReviews(id);
+  }
+  function closeModal() {
+    document.getElementById("detailsModal").classList.add("hidden");
+  }
+  async function loadReviews(placeId) {
+    const content = document.getElementById("modalContent");
+    const reviewsRes = await fetch(`/api/reviews/${placeId}`);
+    const reviews = await reviewsRes.json();
+    let reviewsHtml = '<h3 class="mt-6 text-lg font-bold">Reviews</h3>';
+    if (reviews.length === 0) {
+      reviewsHtml += '<p class="text-gray-500">No reviews yet.</p>';
+    } else {
+      for (const r of reviews) {
+        reviewsHtml += `<div class="border-b py-2"><span class="text-yellow-400">${"★".repeat(
+          r.rating
+        )}${"☆".repeat(5 - r.rating)}</span> <span class="text-gray-700">${
+          r.comment || ""
+        }</span> <span class="text-xs text-gray-400">by User ${
+          r.user_id
+        }</span></div>`;
       }
     }
-
-    function onRadiusChange(e) {
-      userRadius = parseFloat(e.target.value);
-      loadPlaces();
+    if (userId) {
+      reviewsHtml += `
+      <form id="reviewForm" class="mt-4">
+        <label class="block mb-1 font-semibold">Your Rating:</label>
+        <select id="reviewRating" class="mb-2 px-2 py-1 border rounded">
+          <option value="5">5</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1</option>
+        </select>
+        <label class="block mb-1 font-semibold">Your Review:</label>
+        <textarea id="reviewComment" class="w-full border rounded mb-2 px-2 py-1"></textarea>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Submit Review</button>
+      </form>
+    `;
     }
-
-    async function toggleFavorite(e, placeId) {
-      e.stopPropagation();
-      if (!userId) {
-        alert("Please log in to save favorites.");
-        return;
-      }
-      const icon = document.getElementById(`fav-icon-${placeId}`);
-      if (icon.textContent === "♡") {
-        await fetch(`/api/favorites?user_id=${userId}`, {
+    content.innerHTML += reviewsHtml;
+    if (userId) {
+      document.getElementById("reviewForm").onsubmit = async function (ev) {
+        ev.preventDefault();
+        const rating = document.getElementById("reviewRating").value;
+        const comment = document.getElementById("reviewComment").value;
+        await fetch(`/api/reviews/${placeId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ place_id: placeId }),
+          body: JSON.stringify({ user_id: userId, rating, comment }),
         });
-        icon.textContent = "♥";
-        icon.classList.add("text-red-500");
-      } else {
-        await fetch(`/api/favorites?user_id=${userId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ place_id: placeId }),
-        });
-        icon.textContent = "♡";
-        icon.classList.remove("text-red-500");
-      }
+        loadReviews(placeId);
+      };
     }
-
-    async function viewDetails(e, id) {
-      e.stopPropagation();
-      const modal = document.getElementById("detailsModal");
-      const content = document.getElementById("modalContent");
-      modal.classList.remove("hidden");
-      content.innerHTML = "Loading...";
-      const res = await fetch(`/places/${id}`);
-      const html = await res.text();
-      // Extract the main content from the detail page (simple way)
-      const match = html.match(/<main[\s\S]*?>([\s\S]*?)<\/main>/);
-      content.innerHTML = match ? match[1] : html;
-      // Optionally, load reviews and rating form here
-      loadReviews(id);
-    }
-
-    function closeModal() {
-      document.getElementById("detailsModal").classList.add("hidden");
-    }
-
-    async function loadReviews(placeId) {
-      const content = document.getElementById("modalContent");
-      const reviewsRes = await fetch(`/api/reviews/${placeId}`);
-      const reviews = await reviewsRes.json();
-      let reviewsHtml = '<h3 class="mt-6 text-lg font-bold">Reviews</h3>';
-      if (reviews.length === 0) {
-        reviewsHtml += '<p class="text-gray-500">No reviews yet.</p>';
-      } else {
-        for (const r of reviews) {
-          reviewsHtml += `<div class="border-b py-2"><span class="text-yellow-400">${"★".repeat(
-            r.rating
-          )}${"☆".repeat(5 - r.rating)}</span> <span class="text-gray-700">${
-            r.comment || ""
-          }</span> <span class="text-xs text-gray-400">by User ${
-            r.user_id
-          }</span></div>`;
-        }
-      }
-      // Add review form if logged in
-      if (userId) {
-        reviewsHtml += `
-        <form id="reviewForm" class="mt-4">
-          <label class="block mb-1 font-semibold">Your Rating:</label>
-          <select id="reviewRating" class="mb-2 px-2 py-1 border rounded">
-            <option value="5">5</option>
-            <option value="4">4</option>
-            <option value="3">3</option>
-            <option value="2">2</option>
-            <option value="1">1</option>
-          </select>
-          <label class="block mb-1 font-semibold">Your Review:</label>
-          <textarea id="reviewComment" class="w-full border rounded mb-2 px-2 py-1"></textarea>
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Submit Review</button>
-        </form>
-      `;
-      }
-      content.innerHTML += reviewsHtml;
-      if (userId) {
-        document.getElementById("reviewForm").onsubmit = async function (ev) {
-          ev.preventDefault();
-          const rating = document.getElementById("reviewRating").value;
-          const comment = document.getElementById("reviewComment").value;
-          await fetch(`/api/reviews/${placeId}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId, rating, comment }),
-          });
-          loadReviews(placeId);
-        };
-      }
-    }
-
-    window.onload = function () {
-      loadPlaces();
-    };
-  </script>
-  <!-- Removed duplicate/stray JS code -->
-  {% endblock %}
-</h1>
+  }
+  window.onload = function () {
+    loadPlaces();
+  };
+</script>
+{% endblock %}

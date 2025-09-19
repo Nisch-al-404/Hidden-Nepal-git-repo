@@ -34,10 +34,10 @@ class Place:
         db = get_db()
         cursor = db.cursor()
         query = """
-        INSERT INTO places (name, description, latitude, longitude, image_url, contributor_id, status, created_at)
+        INSERT INTO Places (name, description, latitude, longitude, image_url, contributor_id, status, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (self.name, self.description, self.latitude, self.longitude,self.image_url, self.contributor_id, self.status, self.created_at))
+        cursor.execute(query, (self.name, self.description, self.latitude, self.longitude, self.image_url, self.contributor_id, self.status, self.created_at))
         db.commit()
         cursor.close()
-        db.close()    
+        db.close()
