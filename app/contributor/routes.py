@@ -22,6 +22,26 @@ UPLOAD_FOLDER = "app/static/uploads/"
 # def contributor_dashboard():
 #     return render_template('contributor/contributor_layout.html',user=current_user)
 
+# @contributor_bp.route('/')
+@contributor_bp.route('/my_contributions')
+@login_required
+def my_contributions():
+    user_id = current_user.id
+    
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT * FROM places WHERE submitted_by = %s ORDER BY created_at DESC",
+        (user_id,)
+    )
+    places = cursor.fetchall()
+    print(places)
+    cursor.close()
+    db.close()
+    return render_template('contributor/my_contributions.html', places=places)
+
+
 @contributor_bp.route('/add_place', methods=['GET', 'POST'])
 def add_place():
     if request.method == 'POST':
@@ -73,24 +93,6 @@ def add_place():
 
     return render_template('contributor/add_place.html')
 
-@contributor_bp.route('/')
-@contributor_bp.route('/my_contributions')
-@login_required
-def my_contributions():
-    user_id = current_user.id
-    
-
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT * FROM places WHERE submitted_by = %s ORDER BY created_at DESC",
-        (user_id,)
-    )
-    places = cursor.fetchall()
-    print(places)
-    cursor.close()
-    db.close()
-    return render_template('contributor/my_contributions.html', places=places)
 
 #  Edit Place
 @contributor_bp.route('/edit_place/<int:place_id>', methods=['GET', 'POST'])
@@ -133,19 +135,26 @@ def edit_place(place_id):
             WHERE place_id=%s
         """, (name, description, latitude, longitude, place_id))
 
-        # ✅ Handle new images
-        new_images = request.files.getlist('images')
-        for image in new_images:
-            if image and image.filename:
-                filename = secure_filename(image.filename)
-                unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{filename}"
-                image_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-                image.save(image_path)
+        try:
+            # ✅ Handle new images
+            new_images = request.files.getlist('images')
+            for image in new_images:
+                if image and image.filename:
+                    filename = secure_filename(image.filename)
+                    unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{filename}"
+                    image_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                    image.save(image_path)
 
-                cursor.execute("""
+                    
+
+                    cursor.execute("""
                     INSERT INTO place_images (place_id, image_url, uploaded_at)
                     VALUES (%s, %s, %s)
-                """, (place_id, unique_filename, datetime.utcnow()))
+                    """, (place_id, image_path, datetime.utcnow()))
+        except Exception as e:
+            conn.rollback()
+            flash("An error occurred while uploading images.")
+            print("Image upload error:", e)
 
         conn.commit()
         flash("Place updated successfully.")
@@ -161,7 +170,7 @@ def edit_place(place_id):
 @contributor_bp.route('/delete_place/<int:place_id>', methods=['POST'])
 @login_required
 def delete_place(place_id):
-    user_id = session.get('user_id')
+    
 
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -199,7 +208,7 @@ def delete_place(place_id):
 @contributor_bp.route('/profile')
 @login_required
 def profile():
-    user_id = session.get('user_id')
+    user_id = current_user.id
     if not user_id:
         flash("Please log in to access your profile.")
         return redirect(url_for('auth.login'))
@@ -209,9 +218,9 @@ def profile():
 
     # Get user info
     cursor.execute("""
-        SELECT id, username, email, created_at 
+        SELECT user_id, username, email, created_at 
         FROM users 
-        WHERE id = %s
+        WHERE user_id = %s
     """, (int(user_id),))
     user = cursor.fetchone()
 
@@ -223,7 +232,7 @@ def profile():
     cursor.execute("""
         SELECT status, COUNT(*) as count 
         FROM places 
-        WHERE contributor_id = %s 
+        WHERE submitted_by = %s 
         GROUP BY status
     """, (int(user_id),))
     rows = cursor.fetchall()
@@ -237,9 +246,9 @@ def profile():
 
     # Recent submissions (last 5)
     cursor.execute("""
-        SELECT id, name, status, created_at 
+        SELECT place_id, name, status, created_at 
         FROM places 
-        WHERE contributor_id = %s 
+        WHERE submitted_by= %s 
         ORDER BY created_at DESC 
         LIMIT 5
     """, (int(user_id),))

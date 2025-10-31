@@ -25,12 +25,12 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-gray-700 font-medium mb-2">Latitude</label>
-                    <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}" readonly required
+                    <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}"  required
                         class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600">
                 </div>
                 <div>
                     <label class="block text-gray-700 font-medium mb-2">Longitude</label>
-                    <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}" readonly required
+                    <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}"  required
                         class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600">
                 </div>
             </div>
@@ -41,17 +41,27 @@
                 <div id="map" class="w-full h-72 rounded-lg shadow border"></div>
             </div>
 
-            <!-- Current Image -->
+            <!-- Current Images -->
             <div>
-                <label class="block text-gray-700 font-medium mb-2">Current Image</label>
-                <img src="/{{ place.image_url }}" alt="Place Image"
-                    class="rounded-lg shadow-md w-40 h-28 object-cover">
+                <label class="block text-gray-700 font-medium mb-2">Current Images</label>
+                <div class="flex flex-wrap gap-4">
+                    {% if images %}
+                        {% for img in images %}
+                            <div class="rounded-lg shadow-md w-40 h-28 overflow-hidden">
+                                <img src="/{{ img.image_url| replace('app/', '') }}" alt="Place Image {{ img.image_id }}"
+                                     class="w-full h-full object-cover">
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-500">No images uploaded.</p>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Upload New Image -->
             <div>
                 <label class="block text-gray-700 font-medium mb-2">Upload New Image (optional)</label>
-                <input type="file" name="image" accept="image/*"
+                <input type="file" name="images" multiple accept="image/*"
                     class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
