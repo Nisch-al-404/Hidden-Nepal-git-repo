@@ -30,7 +30,7 @@
                         <td class="px-6 py-3 text-sm text-gray-500">
                             {{ place.created_at.strftime("%Y-%m-%d") if place.created_at else '' }}
                         </td>
-                        <td>{{ place['created_at'].strftime("%Y-%m-%d") if place['created_at'] else '' }}</td>
+                        
                         <td class="text-center space-x-2">
                             {% if place.status == "pending" %}
                                 <a href="{{ url_for('contributor.edit_place', place_id=place['place_id']) }}"
@@ -54,7 +54,23 @@
             </table>
         </div>
     {% else %}
-        <p class="text-gray-600 text-lg">🙁 You haven’t submitted any places yet.</p>
+<div class="flex flex-col items-center justify-center p-10 bg-gradient-to-b from-amber-50 to-emerald-50 rounded-2xl shadow-md border border-emerald-100 text-center">
+  <div class="text-6xl mb-4">🗺️</div>
+  <h2 class="text-2xl font-bold text-gray-800">No Places Submitted Yet</h2>
+  <p class="text-gray-600 mt-2 max-w-md">
+    Your contribution journey begins here! 🌿  
+    Share a hidden place from your community and help others discover Nepal’s beauty.
+  </p>
+   <a href="{{ url_for('contributor.add_place') }}" 
+     class="mt-6 inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2 rounded-full shadow transition-all duration-300">
+    ➕ Add Your First Place
+  </a>
+</div>
+
+
+
+
+
     {% endif %}
 
     
