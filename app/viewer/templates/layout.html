@@ -18,16 +18,55 @@
         font-family: "Poppins", Arial, sans-serif;
       }
     </style>
+    <style>
+      /* Sidebar scrolling improvements */
+      #explore-sidebar {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+        scroll-behavior: smooth;
+      }
+      /* Mobile categories panel should also scroll independently */
+      #mobile-categories-panel {
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+      }
+    </style>
   </head>
   <body class="flex flex-col min-h-screen bg-gray-50">
     <!-- Navbar -->
     <nav class="bg-white shadow sticky top-0 z-50">
       <div
-        class="container mx-auto px-4 py-4 flex justify-between items-center"
+        class="container mx-auto px-4 py-4 flex justify-between items-center relative"
       >
         <a href="/" class="text-3xl font-extrabold text-blue-700 tracking-tight"
           >Hidden <span class="text-pink-500">Nepal</span></a
         >
+        <!-- Mobile Search Toggle (outside hamburger) -->
+        <button
+          id="mobile-search-toggle"
+          class="lg:hidden ml-3 text-2xl text-blue-700 focus:outline-none"
+          aria-expanded="false"
+          title="Search"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-7 h-7"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+            />
+          </svg>
+        </button>
+
         <!-- Hamburger Icon for Mobile -->
         <button
           id="nav-toggle"
@@ -48,6 +87,54 @@
             />
           </svg>
         </button>
+        <!-- Mobile Categories Toggle (small screens) -->
+        <button
+          id="mobile-categories-toggle"
+          class="lg:hidden ml-3 text-2xl text-blue-700 focus:outline-none"
+          aria-expanded="false"
+          aria-controls="mobile-categories-panel"
+          title="Show categories"
+          style="position: relative; z-index: 70"
+        >
+          <!-- Chocolate icon (replaces hamburger on small screens) -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-8 h-8"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM7 9h2v2H7V9zm4 0h2v2h-2V9zm4 0h2v2h-2V9zM7 13h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"
+            />
+          </svg>
+        </button>
+
+        <!-- Mobile Search Panel (appears when mobile-search-toggle clicked) -->
+        <div
+          id="mobile-search-panel"
+          class="hidden absolute right-4 top-16 z-50 bg-white p-3 rounded-lg shadow-lg w-64"
+        >
+          <form
+            id="mobileNavSearchForm"
+            action="/places"
+            method="get"
+            class="flex"
+          >
+            <input
+              id="mobileNavSearchInput"
+              name="q"
+              type="text"
+              placeholder="Search..."
+              class="flex-1 px-2 py-1 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <button
+              type="submit"
+              class="px-3 py-1 bg-blue-600 text-white rounded-r hover:bg-blue-700"
+            >
+              Go
+            </button>
+          </form>
+        </div>
         <div
           id="nav-menu"
           class="hidden lg:flex lg:items-center w-full lg:w-auto flex-col lg:flex-row lg:space-x-6 mt-4 lg:mt-0 bg-white lg:bg-transparent p-4 lg:p-0 rounded-lg shadow-lg lg:shadow-none"
@@ -91,13 +178,15 @@
               >
             </li>
           </ul>
-          <!-- Search Bar -->
+          <!-- Search Bar (responsive) -->
           <form
-            action="/search"
+            id="navSearchForm"
+            action="/places"
             method="get"
-            class="flex mt-4 lg:mt-0 w-full lg:w-auto"
+            class="hidden lg:flex mt-4 lg:mt-0 w-full lg:w-auto"
           >
             <input
+              id="navSearchInput"
               type="text"
               name="q"
               placeholder="Search..."
@@ -117,106 +206,365 @@
         const navToggle = document.getElementById("nav-toggle");
         const navMenu = document.getElementById("nav-menu");
         navToggle &&
-          navToggle.addEventListener("click", () => {
-            navMenu.classList.toggle("hidden");
+          navToggle.addEventListener("click", () =>
+            navMenu.classList.toggle("hidden")
+          );
+        document.addEventListener("click", function (ev) {
+          const panel = document.getElementById("nav-menu");
+          if (!panel || panel.classList.contains("hidden")) return;
+          const insidePanel = panel.contains(ev.target);
+          const isToggle = navToggle.contains(ev.target);
+          if (!insidePanel && !isToggle) {
+            panel.classList.add("hidden");
+            navToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+        // Mobile categories toggle: attach after DOMContentLoaded so the panel element exists
+        document.addEventListener("DOMContentLoaded", function () {
+          const mobileCatsToggle = document.getElementById(
+            "mobile-categories-toggle"
+          );
+          const mobileCatsPanel = document.getElementById(
+            "mobile-categories-panel"
+          );
+          if (!mobileCatsToggle) return;
+
+          mobileCatsToggle.addEventListener("click", function (e) {
+            // ensure panel exists at click time
+            const panel = document.getElementById("mobile-categories-panel");
+            if (!panel) return;
+            const isHidden = panel.classList.contains("hidden");
+            if (isHidden) {
+              panel.classList.remove("hidden");
+              mobileCatsToggle.setAttribute("aria-expanded", "true");
+            } else {
+              panel.classList.add("hidden");
+              mobileCatsToggle.setAttribute("aria-expanded", "false");
+            }
           });
+
+          // Close mobile panel if clicking outside
+          document.addEventListener("click", function (ev) {
+            const panel = document.getElementById("mobile-categories-panel");
+            if (!panel || panel.classList.contains("hidden")) return;
+            const insidePanel = panel.contains(ev.target);
+            const isToggle = mobileCatsToggle.contains(ev.target);
+            if (!insidePanel && !isToggle) {
+              panel.classList.add("hidden");
+              mobileCatsToggle.setAttribute("aria-expanded", "false");
+            }
+          });
+        });
+
+        // Nav search: make desktop and mobile search forms behave the same and prefer AJAX loader if available
+        function handleSearchSubmit(e, inputEl) {
+          e.preventDefault();
+          const q = (inputEl || {}).value || "";
+          if (window.loadPlaces) {
+            const localInput = document.getElementById("searchInput");
+            if (localInput) localInput.value = q;
+            try {
+              window.loadPlaces(q);
+            } catch (err) {
+              window.location.href =
+                "/places" + (q ? "?q=" + encodeURIComponent(q) : "");
+            }
+          } else {
+            window.location.href =
+              "/places" + (q ? "?q=" + encodeURIComponent(q) : "");
+          }
+        }
+
+        const navSearchForm = document.getElementById("navSearchForm");
+        const navSearchInput = document.getElementById("navSearchInput");
+        if (navSearchForm && navSearchInput) {
+          navSearchForm.addEventListener("submit", function (e) {
+            handleSearchSubmit(e, navSearchInput);
+          });
+        }
+
+        // Mobile search form/panel
+        const mobileSearchToggle = document.getElementById(
+          "mobile-search-toggle"
+        );
+        const mobileSearchPanel = document.getElementById(
+          "mobile-search-panel"
+        );
+        const mobileNavSearchForm = document.getElementById(
+          "mobileNavSearchForm"
+        );
+        const mobileNavSearchInput = document.getElementById(
+          "mobileNavSearchInput"
+        );
+
+        if (mobileSearchToggle && mobileSearchPanel) {
+          mobileSearchToggle.addEventListener("click", function (e) {
+            const isHidden = mobileSearchPanel.classList.contains("hidden");
+            if (isHidden) {
+              mobileSearchPanel.classList.remove("hidden");
+              mobileSearchToggle.setAttribute("aria-expanded", "true");
+              // focus input when shown
+              setTimeout(
+                () => mobileNavSearchInput && mobileNavSearchInput.focus(),
+                50
+              );
+            } else {
+              mobileSearchPanel.classList.add("hidden");
+              mobileSearchToggle.setAttribute("aria-expanded", "false");
+            }
+          });
+
+          // Close panel when clicking outside
+          document.addEventListener("click", function (ev) {
+            if (
+              !mobileSearchPanel ||
+              mobileSearchPanel.classList.contains("hidden")
+            )
+              return;
+            const inside =
+              mobileSearchPanel.contains(ev.target) ||
+              mobileSearchToggle.contains(ev.target);
+            if (!inside) {
+              mobileSearchPanel.classList.add("hidden");
+              mobileSearchToggle.setAttribute("aria-expanded", "false");
+            }
+          });
+        }
+
+        if (mobileNavSearchForm && mobileNavSearchInput) {
+          mobileNavSearchForm.addEventListener("submit", function (e) {
+            // close panel and perform search
+            if (mobileSearchPanel) mobileSearchPanel.classList.add("hidden");
+            handleSearchSubmit(e, mobileNavSearchInput);
+          });
+        }
       </script>
     </nav>
+
+    <!-- Mobile Categories Panel (visible on small screens when toggled) -->
+    <div
+      id="mobile-categories-panel"
+      class="md:hidden hidden bg-white shadow-lg border-b z-60"
+      style="position: relative"
+    >
+      <div class="container mx-auto px-4 py-4">
+        <h3
+          class="font-bold mb-3 text-lg text-blue-700 tracking-wide uppercase"
+        >
+          Nepal Highlights
+        </h3>
+        <ul class="space-y-2">
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Mountains & Peaks"
+              >Mountains & Peaks</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Lakes & Rivers"
+              >Lakes & Rivers</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="National Parks & Wildlife"
+              >National Parks & Wildlife</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Waterfalls & Caves"
+              >Waterfalls & Caves</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Hills & Valleys"
+              >Hills & Valleys</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Cultural & Historical Heritage"
+              >Cultural & Historical Heritage</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Spiritual & Religious Sites"
+              >Spiritual & Religious Sites</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Adventure & Trekking"
+              >Adventure & Trekking</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Scenic Spots & Hill Stations"
+              >Scenic Spots & Hill Stations</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Food & Cuisine"
+              >Food & Cuisine</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Accommodation & Tourism Services"
+              >Accommodation & Tourism Services</a
+            >
+          </li>
+          <li>
+            <a
+              href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Cities & Nightlife"
+              >Cities & Nightlife</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <!-- Main Content with Sidebar -->
     <div class="flex flex-1 w-full">
       <!-- Sidebar -->
       <aside
         id="explore-sidebar"
-        class="hidden md:block w-64 bg-white shadow-lg rounded-lg p-6 mr-8 mt-8 h-max sticky top-28 self-start"
+        class="hidden md:block w-64 bg-white shadow-lg rounded-lg p-6 mr-8 mt-8 sticky top-28 self-start"
+        style="max-height: calc(100vh - 6rem)"
       >
-        <h2 class="text-xl font-bold mb-4 text-blue-700">Explore</h2>
+        <!-- Show All button -->
+
         <div class="mb-6">
           <h3
-            class="font-bold mb-3 text-lg text-blue-800 tracking-wide uppercase"
+            class="font-bold mb-3 text-lg text-blue-700 tracking-wide uppercase"
           >
-            Regions
+            Nepal Highlights
           </h3>
-          <ul class="space-y-2">
+          <ul id="categoryList" class="space-y-2">
             <li>
               <a
                 href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-900 transition"
-                onclick="filterRegion('Kathmandu')"
-                >Kathmandu</a
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Mountains & Peaks"
+                >Mountains & Peaks</a
               >
             </li>
             <li>
               <a
                 href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-900 transition"
-                onclick="filterRegion('Pokhara')"
-                >Pokhara</a
-              >
-            </li>
-            <li>
-              <a
-                href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-900 transition"
-                onclick="filterRegion('Himalayas')"
-                >Himalayas</a
-              >
-            </li>
-            <li>
-              <a
-                href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-900 transition"
-                onclick="filterRegion('Terai')"
-                >Terai</a
-              >
-            </li>
-          </ul>
-        </div>
-        <div class="mb-6">
-          <h3
-            class="font-bold mb-3 text-lg text-pink-700 tracking-wide uppercase"
-          >
-            Categories
-          </h3>
-          <ul class="space-y-2">
-            <li>
-              <a
-                href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Temples & Heritage')"
-                >Temples & Heritage</a
-              >
-            </li>
-            <li>
-              <a
-                href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Lakes & Rivers')"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Lakes & Rivers"
                 >Lakes & Rivers</a
               >
             </li>
             <li>
               <a
                 href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Hiking & Trekking')"
-                >Hiking & Trekking</a
-              >
-            </li>
-            <li>
-              <a
-                href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('National Parks & Wildlife')"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="National Parks & Wildlife"
                 >National Parks & Wildlife</a
               >
             </li>
             <li>
               <a
                 href="#"
-                class="block px-3 py-2 rounded-lg font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 hover:text-pink-900 transition"
-                onclick="filterCategory('Cultural Experiences')"
-                >Cultural Experiences</a
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Waterfalls & Caves"
+                >Waterfalls & Caves</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Hills & Valleys"
+                >Hills & Valleys</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Cultural & Historical Heritage"
+                >Cultural & Historical Heritage</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Spiritual & Religious Sites"
+                >Spiritual & Religious Sites</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Adventure & Trekking"
+                >Adventure & Trekking</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Scenic Spots & Hill Stations"
+                >Scenic Spots & Hill Stations</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Food & Cuisine"
+                >Food & Cuisine</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Accommodation & Tourism Services"
+                >Accommodation & Tourism Services</a
+              >
+            </li>
+            <li>
+              <a
+                href="#"
+                class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+                data-name="Cities & Nightlife"
+                >Cities & Nightlife</a
               >
             </li>
           </ul>
@@ -243,8 +591,11 @@
               <option value="2">2km</option>
               <option value="5">5km</option>
               <option value="10">10km</option>
+              <option value="20">20km</option>
+              <option value="30">30km</option>
+              <option value="40">40km</option>
             </select>
-            radius of
+            radius of my location
             <button
               id="sidebarGetLocationBtn"
               class="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
@@ -263,64 +614,297 @@
       </main>
     </div>
     <script>
-      function filterRegion(region) {
-        window.location.href = `/places?region=${encodeURIComponent(region)}`;
-      }
-      function filterCategory(category) {
-        window.location.href = `/places?category=${encodeURIComponent(
-          category
-        )}`;
-      }
-      function showNearMe() {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function (pos) {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            window.location.href = `/places?nearby=1&lat=${lat}&lng=${lng}`;
-          });
-        } else {
-          alert("Geolocation is not supported by your browser.");
+      // Sidebar and nav helpers
+      function clearActiveCategory(sidebar) {
+        const prev = sidebar.querySelector(".category-item.category-active");
+        if (prev) {
+          prev.classList.remove(
+            "category-active",
+            "bg-blue-50",
+            "text-blue-700"
+          );
+          prev.classList.add("text-gray-700");
         }
+      }
+
+      function setActiveCategory(el) {
+        el.classList.remove("text-gray-700");
+        el.classList.add("category-active", "bg-blue-50", "text-blue-700");
+      }
+
+      function onCategoryClick(el, category) {
+        const sidebar = document.getElementById("explore-sidebar");
+        if (sidebar) clearActiveCategory(sidebar);
+        setActiveCategory(el);
+
+        // If a mobile categories panel is open, hide it after a selection so mobile UX is clean
+        try {
+          const mobilePanel = document.getElementById(
+            "mobile-categories-panel"
+          );
+          const mobileToggle = document.getElementById(
+            "mobile-categories-toggle"
+          );
+          if (mobilePanel && !mobilePanel.classList.contains("hidden")) {
+            mobilePanel.classList.add("hidden");
+            if (mobileToggle)
+              mobileToggle.setAttribute("aria-expanded", "false");
+          }
+        } catch (e) {}
+
+        if (document.getElementById("placesGrid")) {
+          fetch(
+            `/api/places/advanced_filter?category=${encodeURIComponent(
+              category
+            )}`
+          )
+            .then((res) => res.json())
+            .then((places) => {
+              if (window.renderPlaces) window.renderPlaces(places);
+              else
+                window.location.href = `/places?category=${encodeURIComponent(
+                  category
+                )}`;
+            })
+            .catch((err) =>
+              console.error("Error fetching category places:", err)
+            );
+        } else {
+          window.location.href = `/places?category=${encodeURIComponent(
+            category
+          )}`;
+        }
+      }
+
+      function onShowAllClick() {
+        const sidebar = document.getElementById("explore-sidebar");
+        if (sidebar) clearActiveCategory(sidebar);
+        if (window.loadPlaces) window.loadPlaces();
+        else window.location.href = "/places";
+      }
+
+      function showNearMe() {
+        if (!navigator.geolocation)
+          return alert("Geolocation is not supported by your browser.");
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const lat = pos.coords.latitude,
+            lng = pos.coords.longitude;
+          if (
+            document.getElementById("placesGrid") &&
+            window.loadPlacesNearby
+          ) {
+            window.loadPlacesNearby(lat, lng);
+          } else {
+            window.location.href = `/places?nearby=1&lat=${lat}&lng=${lng}`;
+          }
+        });
       }
 
       // Sidebar location/radius UI logic (syncs with homepage logic)
       window.sidebarUserLocation = null;
       window.sidebarUserRadius = 0.5;
       function sidebarAskLocationAndReload() {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function (pos) {
-            window.sidebarUserLocation = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-            };
-            // If homepage grid present, update global vars and reload
-            if (window.setUserLocationAndReload) {
-              window.setUserLocationAndReload(
-                window.sidebarUserLocation,
-                window.sidebarUserRadius
-              );
-            }
-          });
-        } else {
-          alert("Geolocation is not supported by your browser.");
-        }
+        if (!navigator.geolocation)
+          return alert("Geolocation is not supported by your browser.");
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          window.sidebarUserLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          if (window.setUserLocationAndReload)
+            window.setUserLocationAndReload(
+              window.sidebarUserLocation,
+              window.sidebarUserRadius
+            );
+        });
       }
       function sidebarOnRadiusChange(e) {
         window.sidebarUserRadius = parseFloat(e.target.value);
-        if (window.setUserLocationAndReload) {
+        if (window.setUserLocationAndReload)
           window.setUserLocationAndReload(
             window.sidebarUserLocation,
             window.sidebarUserRadius
           );
-        }
       }
       document.addEventListener("DOMContentLoaded", function () {
         const btn = document.getElementById("sidebarGetLocationBtn");
         const sel = document.getElementById("sidebarRadiusSelect");
-        if (btn && sel) {
-          btn.onclick = sidebarAskLocationAndReload;
-          sel.onchange = sidebarOnRadiusChange;
-        }
+        if (btn) btn.onclick = sidebarAskLocationAndReload;
+        if (sel) sel.onchange = sidebarOnRadiusChange;
+      });
+      // Attach category link handlers for dynamic loading
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".category-link").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const catId = this.dataset.id;
+            const catName = this.dataset.name;
+            // toggle active styling
+            document.querySelectorAll(".category-link.active").forEach((a) => {
+              a.classList.remove("active", "bg-blue-50", "text-blue-700");
+              a.classList.add("text-gray-700");
+            });
+            this.classList.add("active", "bg-blue-50", "text-blue-700");
+
+            let url;
+            if (catId)
+              url = `/api/places/by_category?category_id=${encodeURIComponent(
+                catId
+              )}`;
+            else
+              url = `/api/places/by_category?category=${encodeURIComponent(
+                catName
+              )}`;
+
+            fetch(url)
+              .then((res) => res.json())
+              .then((data) => {
+                const grid =
+                  document.getElementById("placesGrid") ||
+                  document.getElementById("places-container");
+                if (!grid) {
+                  console.warn(
+                    "No places container found to render category results"
+                  );
+                  // hide mobile categories panel if present
+                  try {
+                    const panel = document.getElementById(
+                      "mobile-categories-panel"
+                    );
+                    const toggle = document.getElementById(
+                      "mobile-categories-toggle"
+                    );
+                    if (panel && !panel.classList.contains("hidden")) {
+                      panel.classList.add("hidden");
+                      if (toggle) toggle.setAttribute("aria-expanded", "false");
+                    }
+                  } catch (e) {}
+                  return;
+                }
+                let html = "";
+                if (!data || data.length === 0) {
+                  html =
+                    '<div class="col-span-full text-center text-gray-500">No places found in this category.</div>';
+                } else {
+                  for (const place of data) {
+                    // normalize image URL: if it's a bare filename, prefix with /static/images/
+                    function normalizeImageUrl(url) {
+                      if (!url) return "/static/images/placeholder.jpg";
+                      url = String(url).trim();
+                      if (
+                        url.startsWith("http://") ||
+                        url.startsWith("https://")
+                      )
+                        return url;
+                      // If already under /static return as-is
+                      if (url.startsWith("/static/")) return url;
+                      // If starts with a slash but not /static, assume it's a bare filename path like '/name.jpg' -> prefix static/images
+                      if (url.startsWith("/")) return "/static/images" + url;
+                      return "/static/images/" + url;
+                    }
+                    const image = normalizeImageUrl(place.image_url);
+                    const pid =
+                      place.place_id ||
+                      place.id ||
+                      place.ID ||
+                      place.placeId ||
+                      "";
+                    html += `\
+                      <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">\
+                        <img src="${image}" alt="${
+                      place.name || ""
+                    }" class="w-full h-64 object-cover" />\
+                        <div class="p-4">\
+                          <a href="/places/${pid}" class="text-lg font-semibold text-blue-700 hover:underline">${
+                      place.name || ""
+                    }</a>\
+                          <p class="text-gray-600">${
+                            place.description
+                              ? place.description.substring(0, 100) +
+                                (place.description.length > 100 ? "..." : "")
+                              : ""
+                          }</p>\
+                          <p class="text-sm text-gray-500"><strong>Location:</strong> ${
+                            place.location || ""
+                          }</p>\
+                          <div class="mt-3">
+                            <button onclick="(window.viewDetails)?viewDetails(event, '${pid}'):(window.location.href='/places/${pid}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
+                          </div>\
+                        </div>\
+                      </div>`;
+                  }
+                }
+                grid.innerHTML = html;
+                // hide mobile categories panel after rendering results
+                try {
+                  const panel = document.getElementById(
+                    "mobile-categories-panel"
+                  );
+                  const toggle = document.getElementById(
+                    "mobile-categories-toggle"
+                  );
+                  if (panel && !panel.classList.contains("hidden")) {
+                    panel.classList.add("hidden");
+                    if (toggle) toggle.setAttribute("aria-expanded", "false");
+                  }
+                } catch (e) {}
+              })
+              .catch((err) =>
+                console.error("Error loading category places:", err)
+              );
+          });
+        });
+      });
+
+      // Prevent scroll propagation for sidebar and mobile panel so page doesn't scroll
+      function preventScrollPropagation(el) {
+        if (!el) return;
+        // Wheel (desktop)
+        el.addEventListener(
+          "wheel",
+          function (e) {
+            const delta = e.deltaY;
+            const atTop = el.scrollTop === 0;
+            const atBottom =
+              Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) <= 1;
+            if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
+              e.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+
+        // Touch (mobile)
+        let startY = 0;
+        el.addEventListener(
+          "touchstart",
+          function (e) {
+            if (e.touches && e.touches.length) startY = e.touches[0].clientY;
+          },
+          { passive: true }
+        );
+        el.addEventListener(
+          "touchmove",
+          function (e) {
+            if (!e.touches || !e.touches.length) return;
+            const curY = e.touches[0].clientY;
+            const diff = startY - curY;
+            const atTop = el.scrollTop === 0;
+            const atBottom =
+              Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) <= 1;
+            if ((diff < 0 && atTop) || (diff > 0 && atBottom)) {
+              e.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        preventScrollPropagation(document.getElementById("explore-sidebar"));
+        preventScrollPropagation(
+          document.getElementById("mobile-categories-panel")
+        );
       });
     </script>
 
@@ -350,53 +934,13 @@
           <div class="font-bold mb-2 text-blue-800">Quick Links</div>
           <ul class="space-y-1">
             <li><a href="/" class="hover:text-blue-600">Home</a></li>
-            <li><a href="/places" class="hover:text-blue-600">Explore</a></li>
+            <!-- Explore link removed as requested -->
             <li><a href="/about" class="hover:text-blue-600">About Us</a></li>
             <li><a href="/contact" class="hover:text-blue-600">Contact</a></li>
             <li><a href="/faq" class="hover:text-blue-600">FAQ</a></li>
           </ul>
         </div>
-        <!-- Categories -->
-        <div>
-          <div class="font-bold mb-2 text-pink-700">Categories</div>
-          <ul class="space-y-1">
-            <li>
-              <a
-                href="/places?category=Temples%20%26%20Heritage"
-                class="hover:text-pink-600"
-                >Temples & Heritage</a
-              >
-            </li>
-            <li>
-              <a
-                href="/places?category=Lakes%20%26%20Rivers"
-                class="hover:text-pink-600"
-                >Lakes & Rivers</a
-              >
-            </li>
-            <li>
-              <a
-                href="/places?category=Hiking%20%26%20Trekking"
-                class="hover:text-pink-600"
-                >Hiking & Trekking</a
-              >
-            </li>
-            <li>
-              <a
-                href="/places?category=National%20Parks%20%26%20Wildlife"
-                class="hover:text-pink-600"
-                >National Parks & Wildlife</a
-              >
-            </li>
-            <li>
-              <a
-                href="/places?category=Cultural%20Experiences"
-                class="hover:text-pink-600"
-                >Cultural Experiences</a
-              >
-            </li>
-          </ul>
-        </div>
+        <!-- Categories removed from footer as requested -->
         <!-- Contact & Socials -->
         <div>
           <div class="font-bold mb-2 text-green-700">Contact & Socials</div>
@@ -411,7 +955,7 @@
           <div class="mb-1 text-sm">
             Phone:
             <a href="tel:+977-XXXX-XXXX" class="text-blue-700 hover:underline"
-              >+977-XXXX-XXXX</a
+              >+977-</a
             >
           </div>
           <div class="flex space-x-3 mt-2">

@@ -1,14 +1,35 @@
-import mysql.connector
+
 from flask_login import UserMixin
 
+from flask import g
+import mysql.connector
+from mysql.connector import Error
 
 def get_db():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",               # Default XAMPP user
-        password="pawan1321",            # Default: empty (no password)
-        database="hidden_nepal"    # Your database name in phpMyAdmin
-    )
+    if 'db' not in g:
+        try:
+            g.db = mysql.connector.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="Pawan23@316#",
+                database="hidden_nepal"
+            )
+            print("✅ Database connection established")
+        except Error as e:
+            print("❌ Database connection failed:", e)
+            g.db = None
+    return g.db
+
+
+def close_db(exception=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+        print("Database connection closed")
+
+
+
 
 class User(UserMixin):
     def __init__(self, user_id,name, email, role):

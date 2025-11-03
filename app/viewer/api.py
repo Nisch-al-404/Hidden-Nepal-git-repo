@@ -1,9 +1,13 @@
 from flask import Blueprint, jsonify, request
 from app.models import get_db
+from . import api_bp
 import requests
 
-api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+@api_bp.route('/test')
+def test():
+    print("API Home accessed")
+    return jsonify({'message': 'Welcome to the Places API'})
 # Advanced filter: by region, category, rating
 @api_bp.route('/places/advanced_filter')
 def advanced_filter():

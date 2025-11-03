@@ -1,0 +1,20 @@
+{
+  "average_rating": "4.0",
+  "reviews": [
+    {
+      "comment": "Breathtaking view of Everest, once-in-a-lifetime experience!",
+      "created_at": "Sun, 02 Nov 2025 20:54:09 GMT",
+      "rating": 3,
+      "review_id": 136,
+      "username": "sita"
+    },
+    {
+      "comment": "Breathtaking view of Everest, once-in-a-lifetime experience!",
+      "created_at": "Sun, 02 Nov 2025 19:50:40 GMT",
+      "rating": 5,
+      "review_id": 76,
+      "username": "sita"
+    }
+  ],
+  "total_reviews": 2
+}

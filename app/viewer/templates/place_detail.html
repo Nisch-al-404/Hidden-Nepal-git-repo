@@ -1,47 +1,486 @@
 {% extends "layout.html" %} {% block content %}
-<div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-8">
-  <img
-    src="{{ place.image_url }}"
-    alt="Image"
-    class="w-full h-80 object-cover rounded mb-6"
-  />
-  <h1 class="text-3xl font-bold mb-2 text-blue-700">{{ place.name }}</h1>
-  <p class="text-gray-700 mb-4">{{ place.description }}</p>
-  <div class="flex flex-wrap gap-4 mb-4">
-    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded"
-      >Latitude: {{ place.latitude }}</span
-    >
-    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded"
-      >Longitude: {{ place.longitude }}</span
-    >
-    <span class="bg-green-100 text-green-700 px-3 py-1 rounded"
-      >Status: {{ place.status }}</span
-    >
+
+<div class="container mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Left column: details, weather, description, reviews, add-review -->
+    <div class="md:col-span-2 bg-white rounded-lg shadow-lg p-6">
+      <h1 class="text-3xl font-bold mb-2 text-blue-700">{{ place.name }}</h1>
+      <div class="text-sm text-gray-600 mb-2">
+        <strong>Location:</strong> {{ place.location or '' }}
+      </div>
+
+      <div id="weatherBox" class="bg-blue-50 rounded p-3 text-blue-900 mb-6">
+        Loading weather...
+      </div>
+
+      <div id="place-description" class="prose text-gray-700">
+        {{ place.description }}
+      </div>
+
+      {# Responsive images grid (like home cards) - show only images, no text #}
+      {% set imgs_grid = place_images if place_images and place_images|length>0
+      else [place.image_url] %}
+      <div class="mt-6">
+        {# Larger, cleaner responsive grid: 2 cols on small, 3 on medium+ #}
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {% for img in imgs_grid %} {% set src = img %} {% if not src %} {% set
+          src = '/static/images/placeholder.jpg' %} {% elif
+          src.startswith('http://') or src.startswith('https://') %} {% set src
+          = src %} {% elif src.startswith('/static/') %} {% set src = src %} {%
+          elif src.startswith('/') %} {% set src = '/static/images' + src %} {%
+          else %} {% set src = '/static/images/' + src %} {% endif %}
+          <div
+            class="overflow-hidden rounded-lg bg-gray-100 shadow-sm transform-gpu transition-transform duration-300 ease-out hover:scale-105 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+            style="will-change: transform"
+          >
+            <img
+              src="{{ src }}"
+              alt="{{ place.name }}"
+              loading="lazy"
+              class="w-full h-48 sm:h-56 md:h-64 object-cover"
+            />
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-between items-center">
+        <!-- Left: View Reviews -->
+        <button
+          id="view-reviews-btn"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+        >
+          Show Reviews
+        </button>
+
+        <!-- Right: View Map -->
+        <button
+          id="view-map-btn"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700"
+          title="View location on map"
+        >
+          View Map
+        </button>
+      </div>
+
+      <div id="reviews-container" class="mt-4 hidden">
+        <h4 class="font-semibold mb-2">
+          User Reviews (<span id="total-reviews">0</span>)
+        </h4>
+        <div id="reviews-list" class="space-y-3"></div>
+      </div>
+
+      <div class="mt-6 bg-gray-50 p-4 rounded">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-semibold">Add Review</div>
+          <div class="text-sm text-gray-600" id="current-user-name">
+            {{ current_user.username if current_user and
+            current_user.is_authenticated else 'Guest' }}
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="block text-sm font-medium">Rating</label>
+          <select id="rating" class="w-full border rounded px-2 py-1">
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Very Good</option>
+            <option value="3">3 - Good</option>
+            <option value="2">2 - Fair</option>
+            <option value="1">1 - Poor</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="block text-sm font-medium">Comment</label>
+          <textarea
+            id="comment"
+            rows="3"
+            class="w-full border rounded px-2 py-1"
+            placeholder="Write your review here..."
+            required
+          ></textarea>
+        </div>
+        <div class="text-right">
+          <button
+            id="submit-review-btn"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Submit Review
+          </button>
+        </div>
+        <p id="review-message" class="mt-2 text-sm text-green-600"></p>
+      </div>
+    </div>
+
+    <!-- Right column removed: images are now shown below the description as a grid -->
   </div>
-  <div class="mt-4">
-    <strong>Contributor ID:</strong> {{ place.contributor_id }}<br />
-    <strong>Created At:</strong> {{ place.created_at }}
-  </div>
-  <div class="mt-8">
-    <h2 class="text-xl font-semibold mb-2 text-blue-700">Current Weather</h2>
-    <div id="weatherBox" class="bg-blue-50 rounded p-4 text-blue-900">
-      Loading weather...
+</div>
+
+<!-- Data holder: safe transfer of server data to JS -->
+<div
+  id="place-data"
+  style="display: none"
+  data-place-id="{{ place.id if place and place.id is not none else (place.place_id if place and place.place_id is not none else '') }}"
+  data-current-user="{{ current_user.id if current_user and current_user.is_authenticated else '' }}"
+  data-lat="{{ place.latitude if place and place.latitude is not none else (place.lat if place and place.lat is not none else '') }}"
+  data-lng="{{ place.longitude if place and place.longitude is not none else (place.lng if place and place.lng is not none else '') }}"
+></div>
+
+<!-- Map Modal (hidden until opened) -->
+<div
+  id="map-modal"
+  class="hidden fixed inset-0 z-50 flex items-center justify-center"
+>
+  <div
+    class="absolute inset-0 bg-black bg-opacity-50"
+    id="map-modal-overlay"
+  ></div>
+  <div class="relative w-full max-w-3xl mx-4">
+    <div class="bg-white rounded-lg overflow-hidden shadow-xl">
+      <div class="flex items-center justify-between px-4 py-2 border-b">
+        <div class="font-semibold text-lg text-gray-800">Location</div>
+        <button
+          id="map-close-btn"
+          class="text-gray-600 hover:text-gray-800 px-2 py-1"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="p-0">
+        <iframe
+          id="map-iframe"
+          class="w-full h-80 sm:h-96"
+          frameborder="0"
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div class="px-4 py-3 flex items-center justify-between gap-3">
+        <div>
+          <button
+            id="get-directions-btn"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Get Directions
+          </button>
+        </div>
+        <div class="text-right">
+          <button
+            id="map-close-btn-2"
+            class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-<script>
-  const weatherBox = document.getElementById("weatherBox");
-  fetch(`/api/weather/{{ place.id }}`)
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.weather && data.temperature !== undefined) {
-        weatherBox.innerHTML = `<strong>${data.weather}</strong>, ${data.temperature}&deg;C`;
-      } else {
-        weatherBox.innerHTML = "Weather data not available.";
-      }
-    })
-    .catch(() => {
-      weatherBox.innerHTML = "Weather data not available.";
-    });
+
+<script id="place-images-json" type="application/json">
+  {{ place_images | tojson | safe }}
 </script>
+
+<!-- Map iframe will be used for embedding (no Leaflet) -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const dataEl = document.getElementById("place-data");
+    let placeId = dataEl ? dataEl.dataset.placeId : "";
+    if (!placeId) {
+      const m = window.location.pathname.match(/\/places\/(\d+)/);
+      placeId = m ? m[1] : "";
+    }
+    const currentUserId = dataEl
+      ? dataEl.dataset.currentUser
+        ? parseInt(dataEl.dataset.currentUser, 10)
+        : null
+      : null;
+
+    // Images (read from <script id="place-images-json" type="application/json">)
+    let IMAGES = [];
+    try {
+      const imagesScript = document.getElementById("place-images-json");
+      IMAGES =
+        imagesScript && imagesScript.textContent
+          ? JSON.parse(imagesScript.textContent)
+          : [];
+    } catch (e) {
+      IMAGES = [];
+    }
+    const imgs = IMAGES.length
+      ? IMAGES
+      : ["{{ place.image_url or '/static/images/placeholder.jpg' }}"];
+
+    // normalize function: turn bare filenames into /static/images/ paths
+    function normalizeImageUrl(url) {
+      if (!url) return "/static/images/placeholder.jpg";
+      url = String(url).trim();
+      if (url.startsWith("http://") || url.startsWith("https://")) return url;
+      if (url.startsWith("/static/")) return url;
+      if (url.startsWith("/")) return "/static/images" + url;
+      return "/static/images/" + url;
+    }
+
+    const normalizedImgs = imgs.map(normalizeImageUrl);
+    const mainImage = document.getElementById("mainImage"); // may be null now that side gallery is removed
+    const thumbs = Array.from(document.querySelectorAll(".thumb")); // may be empty
+
+    // update thumbnail srcs from data-src (normalized)
+    thumbs.forEach((t, idx) => {
+      const srcFromData =
+        t.dataset && t.dataset.src ? t.dataset.src : t.getAttribute("data-src");
+      t.src = normalizeImageUrl(
+        srcFromData || normalizedImgs[idx] || "/static/images/placeholder.jpg"
+      );
+    });
+
+    let currentIndex = 0;
+    function showImage(i) {
+      if (!normalizedImgs.length) return;
+      currentIndex = (i + normalizedImgs.length) % normalizedImgs.length;
+      if (mainImage) {
+        mainImage.src =
+          normalizedImgs[currentIndex] || "/static/images/placeholder.jpg";
+      }
+      thumbs.forEach((t, idx) => {
+        if (idx === currentIndex) {
+          t.classList.add("ring-2", "ring-blue-400");
+        } else {
+          t.classList.remove("ring-2", "ring-blue-400");
+        }
+      });
+    }
+    thumbs.forEach((t, i) => t.addEventListener("click", () => showImage(i)));
+    const prevBtn = document.getElementById("prevImage");
+    const nextBtn = document.getElementById("nextImage");
+    prevBtn &&
+      prevBtn.addEventListener("click", () => showImage(currentIndex - 1));
+    nextBtn &&
+      nextBtn.addEventListener("click", () => showImage(currentIndex + 1));
+    showImage(0);
+
+    // Weather
+    const weatherBox = document.getElementById("weatherBox");
+    if (placeId && weatherBox) {
+      fetch("/api/weather/" + placeId)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && !data.error) {
+            const temp =
+              data.temperature !== undefined
+                ? Number(data.temperature).toFixed
+                  ? Number(data.temperature).toFixed(1) + " °C"
+                  : data.temperature + " °C"
+                : "N/A";
+            const cond = data.description || data.weather || "";
+            const humidity =
+              data.humidity !== undefined ? data.humidity + "%" : "N/A";
+            const wind =
+              data.wind_speed !== undefined ? data.wind_speed + " m/s" : "N/A";
+            weatherBox.innerHTML = `<div class="font-semibold">${cond}</div><div class="text-lg">${temp}</div><div class="text-sm text-gray-700">Humidity: ${humidity}</div><div class="text-sm text-gray-700">Wind: ${wind}</div>`;
+          } else {
+            weatherBox.innerHTML = "Weather data not available.";
+          }
+        })
+        .catch(() => (weatherBox.innerHTML = "Weather data not available."));
+    }
+
+    // Reviews
+    const viewBtn = document.getElementById("view-reviews-btn");
+    const container = document.getElementById("reviews-container");
+    const reviewsList = document.getElementById("reviews-list");
+    const totalSpan = document.getElementById("total-reviews");
+    function formatDateToMDY(isoOrTimestamp) {
+      try {
+        const d = new Date(isoOrTimestamp);
+        if (isNaN(d.getTime())) return "";
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const y = d.getFullYear();
+        return `${m}/${day}/${y}`;
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function renderReviews(data) {
+      totalSpan.textContent = data.total_reviews || 0;
+      reviewsList.innerHTML = "";
+      const reviews = data.reviews || [];
+      if (!reviews.length) {
+        reviewsList.innerHTML =
+          '<p class="text-gray-500">No reviews yet. Be the first to add one!</p>';
+        return;
+      }
+      reviews.forEach((r) => {
+        const div = document.createElement("div");
+        div.className = "review-card p-3 border rounded mb-3";
+
+        const username = r.username || "User";
+        const dateStr = r.created_at ? formatDateToMDY(r.created_at) : "";
+        const stars =
+          "★".repeat(Math.max(0, Math.min(5, Number(r.rating) || 0))) +
+          "☆".repeat(5 - Math.max(0, Math.min(5, Number(r.rating) || 0)));
+
+        // Build markup: username (M/D/YYYY) on first line, star line next, then comment
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="font-semibold">${username}</div>
+            <div class="text-sm text-gray-500">${dateStr}</div>
+          </div>
+          <div class="text-yellow-400 mt-1">${stars}</div>
+          <div class="mt-2 text-gray-700">${(r.comment || "").replace(
+            /\n/g,
+            "<br/>"
+          )}</div>
+        `;
+
+        reviewsList.appendChild(div);
+      });
+    }
+    function fetchReviews() {
+      if (!placeId) return;
+      fetch("/api/reviews/" + placeId)
+        .then((r) => {
+          if (!r.ok) throw new Error("Network");
+          return r.json();
+        })
+        .then(renderReviews)
+        .catch((e) => {
+          console.error("Error fetching reviews", e);
+          reviewsList.innerHTML =
+            '<p class="text-gray-500">Unable to load reviews.</p>';
+        });
+    }
+    viewBtn &&
+      viewBtn.addEventListener("click", () => {
+        if (container.classList.contains("hidden")) {
+          container.classList.remove("hidden");
+          fetchReviews();
+        } else container.classList.add("hidden");
+      });
+
+    // Submit review
+    const submitBtn = document.getElementById("submit-review-btn");
+    const reviewMessage = document.getElementById("review-message");
+    const commentEl = document.getElementById("comment");
+
+    // clear error state when user types
+    if (commentEl) {
+      commentEl.addEventListener("input", () => {
+        reviewMessage.textContent = "";
+        reviewMessage.classList.remove("text-red-600");
+        reviewMessage.classList.remove("text-green-600");
+        commentEl.classList.remove("border", "border-red-500");
+      });
+    }
+
+    submitBtn &&
+      submitBtn.addEventListener("click", () => {
+        if (!currentUserId) {
+          alert("Please log in to submit a review.");
+          return;
+        }
+        const rating = parseInt(document.getElementById("rating").value);
+        const rawComment = commentEl ? commentEl.value : "";
+        const comment = rawComment.trim();
+
+        // Validation: stop submission if comment is empty or only spaces
+        if (!comment) {
+          // show red warning message and add red border to textarea
+          reviewMessage.textContent =
+            "Please share your thoughts — the comment can't be empty!";
+          reviewMessage.classList.remove("text-green-600");
+          reviewMessage.classList.add("text-red-600");
+          if (commentEl) {
+            commentEl.classList.add("border", "border-red-500");
+            commentEl.focus();
+          }
+          return;
+        }
+
+        fetch("/api/reviews/" + placeId, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating: rating, comment: comment }),
+        })
+          .then((res) => {
+            if (res.status === 401) throw new Error("unauthenticated");
+            return res.json();
+          })
+          .then((data) => {
+            reviewMessage.textContent = data.message || "Review submitted.";
+            reviewMessage.classList.remove("text-red-600");
+            reviewMessage.classList.add("text-green-600");
+            if (commentEl) {
+              commentEl.value = "";
+              commentEl.classList.remove("border", "border-red-500");
+            }
+            fetchReviews();
+          })
+          .catch((err) => {
+            if (err.message === "unauthenticated") {
+              alert("You must be logged in to submit a review.");
+            } else {
+              console.error(err);
+              reviewMessage.textContent = "Failed to submit review.";
+              reviewMessage.classList.remove("text-green-600");
+              reviewMessage.classList.add("text-red-600");
+            }
+          });
+      });
+
+    // Map modal behavior (iframe-based)
+    const viewMapBtn = document.getElementById("view-map-btn");
+    const mapModal = document.getElementById("map-modal");
+    const mapOverlay = document.getElementById("map-modal-overlay");
+    const mapClose = document.getElementById("map-close-btn");
+    const mapClose2 = document.getElementById("map-close-btn-2");
+    const getDirectionsBtn = document.getElementById("get-directions-btn");
+    const mapIframe = document.getElementById("map-iframe");
+    const placeLat = dataEl ? dataEl.dataset.lat || "" : "";
+    const placeLng = dataEl ? dataEl.dataset.lng || "" : "";
+
+    function openMap() {
+      if (!placeLat || !placeLng) {
+        alert("Location not available for this place.");
+        return;
+      }
+      const src = `https://maps.google.com/maps?q=${encodeURIComponent(
+        placeLat + "," + placeLng
+      )}&z=15&output=embed`;
+      if (mapIframe) mapIframe.src = src;
+      mapModal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeMap() {
+      mapModal.classList.add("hidden");
+      if (mapIframe) mapIframe.src = "";
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    if (viewMapBtn) viewMapBtn.addEventListener("click", openMap);
+    if (mapOverlay) mapOverlay.addEventListener("click", closeMap);
+    if (mapClose) mapClose.addEventListener("click", closeMap);
+    if (mapClose2) mapClose2.addEventListener("click", closeMap);
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "Escape" &&
+        mapModal &&
+        !mapModal.classList.contains("hidden")
+      )
+        closeMap();
+    });
+
+    // Get directions button opens Google Maps directions in a new tab
+    if (getDirectionsBtn) {
+      getDirectionsBtn.addEventListener("click", function () {
+        if (!placeLat || !placeLng) return alert("Location not available.");
+        const dest = encodeURIComponent(placeLat + "," + placeLng);
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+        window.open(url, "_blank", "noopener");
+      });
+    }
+  });
+</script>
+
 {% endblock %}

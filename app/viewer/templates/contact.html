@@ -1,4 +1,229 @@
-<h1>Contact</h1><p>Contact us at info@hiddennepal.com</p><div class="container mx-auto p-8">
-  <h1 class="text-2xl font-bold mb-4">Contact Us</h1>
-  <p>Email: info@hiddennepal.com<br />Phone: +977-1-1234567</p>
+{% extends "layout.html" %} {% block content %}
+
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
+    <h1 class="text-2xl font-bold mb-4">Contact Us</h1>
+    <p class="text-sm text-gray-600 mb-6">
+      Have a question or feedback? Send us a message and we'll get back to you.
+    </p>
+
+    <form id="contactForm" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700"
+            >Name</label
+          >
+          <input
+            id="name"
+            name="from_name"
+            type="text"
+            required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700"
+            >Email</label
+          >
+          <input
+            id="email"
+            name="from_email"
+            type="email"
+            required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value="{{ current_user.email if current_user and current_user.is_authenticated else '' }}"
+            {%
+            if
+            current_user
+            and
+            current_user.is_authenticated
+            %}readonly{%
+            endif
+            %}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label for="subject" class="block text-sm font-medium text-gray-700"
+          >Subject</label
+        >
+        <input
+          id="subject"
+          name="subject"
+          type="text"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
+
+      <div>
+        <label for="message" class="block text-sm font-medium text-gray-700"
+          >Message</label
+        >
+        <textarea
+          id="message"
+          name="message"
+          rows="6"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+        ></textarea>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <button
+            id="contactSubmit"
+            type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+          >
+            Send Message
+          </button>
+        </div>
+        <div id="contactStatus" class="text-sm"></div>
+      </div>
+    </form>
+  </div>
 </div>
+
+<!-- Server-provided data for client JS (trusted when user is authenticated) -->
+<div
+  id="contactData"
+  style="display: none"
+  data-user-email="{{ current_user.email if current_user and current_user.is_authenticated else '' }}"
+></div>
+
+<!-- EmailJS SDK (modern supported bundle) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+  (function () {
+    try {
+      emailjs.init("N-ktRaiC51fkFtGjq");
+    } catch (e) {
+      console.warn("EmailJS init failed", e);
+    }
+  })();
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("contactForm");
+    const statusEl = document.getElementById("contactStatus");
+    const submitBtn = document.getElementById("contactSubmit");
+
+    function setStatus(message, isError) {
+      statusEl.textContent = message;
+      statusEl.classList.remove("text-red-600", "text-green-600");
+      statusEl.classList.add(isError ? "text-red-600" : "text-green-600");
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // basic validation
+      const name = document.getElementById("name").value.trim();
+      let email = document.getElementById("email").value.trim();
+      const subject = document.getElementById("subject").value.trim();
+      const message = document.getElementById("message").value.trim();
+
+      // If the server provided a trusted email for the logged-in user, use it
+      // rather than any client-side value to ensure the sender is trusted.
+      const contactDataEl = document.getElementById("contactData");
+      const trustedEmail = contactDataEl ? contactDataEl.dataset.userEmail : "";
+      if (trustedEmail) {
+        email = trustedEmail;
+        // make email input read-only in case JS is disabled earlier than template
+        const emailInput = document.getElementById("email");
+        if (emailInput) {
+          emailInput.value = trustedEmail;
+          emailInput.setAttribute("readonly", "readonly");
+        }
+      }
+
+      if (!name || !email || !subject || !message) {
+        setStatus("Please fill in all fields.", true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add("opacity-70", "cursor-not-allowed");
+      setStatus("Sending...", false);
+
+      // Use your EmailJS service and template IDs here. If you haven't set them up,
+      // create a service (e.g. service_hiddennepal) and template (e.g. template_contact).
+      // The template should include fields: from_name, from_email, subject, message, to_email
+      const serviceID = "service_m8n9356";
+      const templateID = "template_w4vltz8";
+
+      // Include multiple key names so they match whichever variable names the
+      // EmailJS template expects (common examples: {{name}}, {{from_name}},
+      // {{message}}, {{time}}). Keep backwards-compatible keys too.
+      const templateParams = {
+        // common template variables
+        name: name,
+        time: new Date().toLocaleString(),
+        message: message,
+
+        // legacy / alternate names (some templates use these)
+        from_name: name,
+        from_email: email,
+        email: email,
+        subject: subject,
+
+        // recipient
+        to_email: "sapkotapawan381@gmail.com",
+      };
+
+      // If the server provided a trusted email for the logged-in user, use the
+      // server-side send endpoint so the sender address is authoritative.
+      const useServerSend = !!trustedEmail;
+
+      function finishSend(success) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-70", "cursor-not-allowed");
+        if (success) {
+          setStatus("Message sent — thank you!", false);
+          form.reset();
+        } else {
+          setStatus("Failed to send message.Failed to send message.", true);
+        }
+      }
+
+      if (useServerSend) {
+        // Send to server endpoint which will read the authenticated user's email
+        fetch("/_internal/send_contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name,
+            subject: subject,
+            message: message,
+          }),
+        })
+          .then(async (resp) => {
+            const body = await resp.json().catch(() => ({}));
+            if (resp.ok) {
+              console.info("Server send response", body);
+              finishSend(true);
+            } else {
+              console.error("Server send failed", resp.status, body);
+              finishSend(false);
+            }
+          })
+          .catch((err) => {
+            console.error("Server send error", err);
+            finishSend(false);
+          });
+      } else {
+        // Anonymous users are not allowed to send messages directly.
+        // Require login so the server can send a trusted email.
+        console.warn("Anonymous send attempted; requiring login");
+        setStatus("Please log in to send messages.", true);
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-70", "cursor-not-allowed");
+        // Optionally redirect to login page after a short delay (commented out):
+        // setTimeout(() => { window.location.href = '/auth/login'; }, 1000);
+      }
+    });
+  });
+</script>
+
+{% endblock %}

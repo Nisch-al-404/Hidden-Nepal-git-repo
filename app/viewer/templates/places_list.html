@@ -1,66 +1,4 @@
 {% extends "layout.html" %} {% block content %}
-<h1 class="text-3xl font-bold mb-6 text-center text-blue-700">All Places</h1>
-
-<form
-  id="searchForm"
-  class="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center"
->
-  <input
-    type="text"
-    id="searchInput"
-    name="q"
-    placeholder="Search places..."
-    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-64"
-  />
-  <select
-    id="filterStatus"
-    name="status"
-    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
-  >
-    <option value="">All Status</option>
-    <option value="approved">Approved</option>
-    <option value="pending">Pending</option>
-    <option value="rejected">Rejected</option>
-  </select>
-  <select
-    id="filterCategory"
-    name="category"
-    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
-  >
-    <option value="">All Categories</option>
-    <option value="Temple">Temple</option>
-    <option value="Hiking">Hiking</option>
-    <option value="Nature">Nature</option>
-    <option value="Culture">Culture</option>
-  </select>
-  <button
-    type="submit"
-    class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-  >
-    Search/Filter
-  </button>
-</form>
-<!-- Location/Radius UI -->
-<div class="flex flex-col sm:flex-row items-center gap-4 mb-6">
-  <label class="font-semibold text-blue-700"
-    >Highlight places within
-    <select id="radiusSelect" class="mx-2 px-2 py-1 border rounded">
-      <option value="0.5">500m</option>
-      <option value="1">1km</option>
-      <option value="2">2km</option>
-      <option value="5">5km</option>
-      <option value="10">10km</option>
-    </select>
-    radius of
-    <button
-      id="getLocationBtn"
-      class="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-    >
-      My Location
-    </button>
-  </label>
-</div>
-
 <div
   id="placesGrid"
   class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
@@ -86,9 +24,15 @@
   }
 
   async function loadPlaces() {
-    const q = document.getElementById("searchInput").value;
-    const status = document.getElementById("filterStatus").value;
-    const category = document.getElementById("filterCategory").value;
+    // Read search query from local page input, or from nav input if present
+    const qEl =
+      document.getElementById("searchInput") ||
+      document.getElementById("navSearchInput");
+    const q = qEl ? (qEl.value || "").trim() : "";
+    const statusEl = document.getElementById("filterStatus");
+    const categoryEl = document.getElementById("filterCategory");
+    const status = statusEl ? statusEl.value : "";
+    const category = categoryEl ? categoryEl.value : "";
     let url = "/api/filter?status=approved";
     if (q) {
       url = `/api/search?q=${encodeURIComponent(q)}`;
@@ -102,8 +46,12 @@
     }
     const res = await fetch(url);
     const places = await res.json();
+    renderPlaces(places);
+  }
+
+  function renderPlaces(places) {
     let html = "";
-    if (places.length === 0) {
+    if (!places || places.length === 0) {
       html =
         '<div class="col-span-full text-center text-gray-500">No places found.</div>';
     } else {
@@ -118,18 +66,18 @@
           );
           if (dist <= userRadius) highlight = true;
         }
+        const pid =
+          place.place_id || place.id || place.ID || place.placeId || "";
         html += `
         <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ${
           highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
         }">
-          <img src="${
-            place.image_url
-          }" alt="Image" class="w-full h-64 object-cover" />
+            <img src="${
+              place.image_url || "/static/images/placeholder.jpg"
+            }" alt="Image" class="w-full h-64 object-cover" />
           <div class="p-4 flex-1 flex flex-col justify-between">
             <div>
-              <a href="/places/${
-                place.id
-              }" class="text-lg font-semibold mb-2 text-blue-700 hover:underline">${
+                <a href="/places/${pid}" class="text-lg font-semibold mb-2 text-blue-700 hover:underline">${
           place.name
         }</a>
               <p class="text-gray-600">${
@@ -144,7 +92,19 @@
       `;
       }
     }
-    document.getElementById("placesGrid").innerHTML = html;
+    const grid = document.getElementById("placesGrid");
+    if (grid) grid.innerHTML = html;
+  }
+
+  // helper for sidebar "Show Near Me" integration
+  async function loadPlacesNearby(lat, lng, radiusKm = 0.1) {
+    const res = await fetch(
+      `/api/nearby?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(
+        lng
+      )}&radius=${encodeURIComponent(radiusKm)}`
+    );
+    const places = await res.json();
+    renderPlaces(places);
   }
 
   function askLocationAndReload() {
@@ -172,7 +132,25 @@
   };
   document.getElementById("getLocationBtn").onclick = askLocationAndReload;
   document.getElementById("radiusSelect").onchange = onRadiusChange;
+  // Expose functions to global scope so the layout's sidebar can call them
+  window.renderPlaces = renderPlaces;
+  window.loadPlaces = loadPlaces;
+  window.loadPlacesNearby = loadPlacesNearby;
+  // If URL contains ?q=... populate the search input(s)
+  function getQueryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
 
-  window.onload = loadPlaces;
+  window.addEventListener("load", function () {
+    const qParam = getQueryParam("q");
+    if (qParam) {
+      const localInput = document.getElementById("searchInput");
+      const navInput = document.getElementById("navSearchInput");
+      if (localInput) localInput.value = qParam;
+      if (navInput) navInput.value = qParam;
+    }
+    loadPlaces();
+  });
 </script>
 {% endblock %}
