@@ -8,6 +8,7 @@
   <div class="max-w-2xl mx-auto mt-10 bg-white shadow p-6 rounded">
   <h1 class="text-2xl font-bold mb-4">Welcome to Your Dashboard</h1>
   <p>Hello, <strong>{{ user.email }}</strong> 👋</p>
+  <img src="/static/images/logo.png" alt="">
   <p>Your role: {{ user.role }}</p>
    <ul>
         <li><a href="{{ url_for('contributor.add_place') }}">➕ Add Place</a></li>

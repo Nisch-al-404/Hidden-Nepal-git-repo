@@ -1,48 +1,78 @@
- <!DOCTYPE html>
-<html>
-<head>
-    <title>My Contributions</title>
-</head>
-<body>
-    <h2>My Submitted Places</h2>
+{% extends "contributor/contributor_layout.html" %}
+{% block content %}
+<div class="px-6 py-4">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">📜 My Submitted Places</h2>
 
     {% if places %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Submitted On</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for place in places %}
-                <tr>
-                    <td>{{ place.name }}</td>
-                    <td>{{ place.status }}</td>
-                    <td>{{ place.created_at.strftime("%Y-%m-%d") if place.created_at else '' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="overflow-x-auto bg-white rounded-xl shadow-md">
+            <table class="min-w-full border border-gray-200 rounded-lg">
+                <thead class="bg-gray-100 text-gray-700 uppercase text-sm">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Name</th>
+                        <th class="px-6 py-3 text-left">Status</th>
+                        <th class="px-6 py-3 text-left">Submitted On</th>
+                        <th class="px-6 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    {% for place in places %}
+                    <tr>
+                        <td>{{ place['name'] }}</td>
+                        <td>
+                            {% if place['status'] == "pending" %}
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pending</span>
+                            {% elif place['status'] == "approved" %}
+                                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Approved</span>
+                            {% else %}
+                                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3 text-sm text-gray-500">
+                            {{ place.created_at.strftime("%Y-%m-%d") if place.created_at else '' }}
+                        </td>
+                        
+                        <td class="text-center space-x-2">
+                            {% if place.status == "pending" %}
+                                <a href="{{ url_for('contributor.edit_place', place_id=place['place_id']) }}"
+                                   class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg text-sm shadow">
+                                    ✏️ Edit
+                                </a>
+                                <form method="POST" action="{{ url_for('contributor.delete_place', place_id=place['place_id'])}}" 
+                                      class="inline">
+                                    <button type="submit" onclick="return confirm('Are you sure?')"
+                                        class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg shadow transition">
+                                        🗑️ Delete
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-gray-400 text-sm">🔒 Locked</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>You haven’t submitted any places yet.</p>
-    {% endif %}
- <!--edit and delete button -->
-    <td>
-    {% if places.status == "pending" %}
-        <a href="{{ url_for('contributor.edit_place', places_id=places.id) }}">✏️ Edit</a>
-        <form method="POST" action="{{ url_for('contributor.delete_place', places_id=places.id) }}" style="display:inline;">
-            <button type="submit" onclick="return confirm('Are you sure you want to delete this place?')">🗑️ Delete</button>
-        </form>
-    {% else %}
-        <span>Locked ({{ places.status }})</span>
-    {% endif %}
-</td>
+<div class="flex flex-col items-center justify-center p-10 bg-gradient-to-b from-amber-50 to-emerald-50 rounded-2xl shadow-md border border-emerald-100 text-center">
+  <div class="text-6xl mb-4">🗺️</div>
+  <h2 class="text-2xl font-bold text-gray-800">No Places Submitted Yet</h2>
+  <p class="text-gray-600 mt-2 max-w-md">
+    Your contribution journey begins here! 🌿  
+    Share a hidden place from your community and help others discover Nepal’s beauty.
+  </p>
+   <a href="{{ url_for('contributor.add_place') }}" 
+     class="mt-6 inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2 rounded-full shadow transition-all duration-300">
+    ➕ Add Your First Place
+  </a>
+</div>
 
 
-    <p><a href="{{ url_for('contributor.contributor_dashboard') }}">← Back to Dashboard</a></p>
-</body>
-</html>
-<!-- This HTML file displays a list of places submitted by the user. -->
-<!-- It includes a table with columns for place name, status, and submission date. -->
+
+
+
+    {% endif %}
+
+    
+</div>
+{% endblock %}

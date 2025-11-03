@@ -48,8 +48,10 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for img in images %}
           <div class="relative group">
-            <img src="/static/uploads/{{ img.image_url }}" alt="Place Image" 
-                 class="rounded-lg shadow-md object-cover w-full h-40 transition group-hover:scale-105">
+           <img src="{{ img.image_url | replace('app', '') }}"
+     alt="Place Image"
+     class="rounded-lg shadow-md object-cover w-full h-40 transition group-hover:scale-105">
+
             <p class="text-xs text-gray-500 mt-1">Uploaded: {{ img.uploaded_at }}</p>
           </div>
         {% endfor %}
