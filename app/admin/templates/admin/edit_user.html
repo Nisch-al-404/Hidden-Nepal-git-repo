@@ -1,0 +1,86 @@
+{%extends "admin/layout.html"%}
+{%block title%}Edit User- Admin Dashboard{%endblock%}
+{%block content%}
+<div class="w-[75%] mx-auto mt-10 bg-white shadow-lg rounded-2xl p-6">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-5 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M5.121 17.804A13.937 13.937 0 0112 15c2.485 0 4.787.676 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Edit User
+    </h2>
+
+    <form method="POST" action="{{ url_for('admin.update_user', user_id=user.user_id) }}" class="space-y-4">
+        <!-- Username -->
+        <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <input type="text" id="username" name="username"
+                   value="{{ user.username }}"
+                   class="w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none p-2.5"
+                   placeholder="Enter username" required>
+        </div>
+
+        <!-- Email -->
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="email" name="email"
+                   value="{{ user.email }}"
+                   class="w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none p-2.5"
+                   placeholder="Enter email" required>
+        </div>
+
+        <!-- Role -->
+        <div>
+            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select id="role" name="role"
+                    class="w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none p-2.5">
+                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                <option value="contributor" {% if user.role == 'user' %}selected{% endif %}>contributor</option>
+            </select>
+        </div>
+
+        <!-- Can Contribute -->
+        <div>
+            <label for="can_contribute" class="block text-sm font-medium text-gray-700 mb-1">Can Contribute</label>
+            <select id="can_contribute" name="can_contribute"
+                    class="w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none p-2.5">
+                <option value="1" {% if user.can_contribute %}selected{% endif %}>Yes</option>
+                <option value="0" {% if not user.can_contribute %}selected{% endif %}>No</option>
+            </select>
+        </div>
+
+        <!-- Is Active -->
+        <div>
+            <label for="is_active" class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
+            <select id="is_active" name="is_active"
+                    class="w-full rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none p-2.5">
+                <option value="1" {% if user.is_active %}selected{% endif %}>Active</option>
+                <option value="0" {% if not user.is_active %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+
+        <!-- Created At -->
+        <div>
+            <label for="created_at" class="block text-sm font-medium text-gray-700 mb-1">Created At</label>
+            <input type="text" id="created_at" name="created_at"
+                   value="{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}"
+                   readonly
+                   class="w-full rounded-lg border border-gray-300 bg-white text-gray-600 p-2.5 cursor-not-allowed">
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-3 pt-4">
+            <a href="{{ url_for('admin.manage_users') }}"
+               class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                Update User
+            </button>
+        </div>
+    </form>
+</div>
+
+{%endblock%}

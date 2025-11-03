@@ -1,0 +1,37 @@
+
+ CREATE TABLE Categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE Place_Categories (
+    place_id    INT NOT NULL,
+    category_id INT NOT NULL,
+    PRIMARY KEY (place_id, category_id),
+    FOREIGN KEY (place_id) REFERENCES Places(place_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES Categories(category_id) ON DELETE CASCADE
+);
+
+ 
+-- Remove old categories
+DELETE FROM Categories;
+SET SQL_SAFE_UPDATES = 0;
+DELETE FROM places;
+SET SQL_SAFE_UPDATES = 1;
+select *from places;
+-- Insert the new updated category set
+INSERT INTO Categories (name, description)
+VALUES
+('Mountains & Peaks', 'Explore Nepal’s towering Himalayan mountains and trekking peaks.'),
+('Lakes & Rivers', 'Discover Nepal’s beautiful lakes, glacial ponds, and rivers.'),
+('National Parks & Wildlife', 'Experience Nepal’s rich biodiversity and protected wildlife reserves.'),
+('Waterfalls & Caves', 'Visit Nepal’s natural waterfalls and mysterious caves.'),
+('Hills & Valleys', 'Enjoy scenic hills, terraced landscapes, and valleys.'),
+('Cultural & Historical Heritage', 'Discover Nepal’s ancient cities, palaces, and traditional architecture.'),
+('Spiritual & Religious Sites', 'Visit temples, stupas, monasteries, and pilgrimage sites.'),
+('Adventure & Trekking', 'For thrill-seekers: trekking, mountaineering, paragliding, rafting, etc.'),
+('Scenic Spots & Hill Stations', 'Relax at hill stations and enjoy breathtaking mountain views.'),
+('Food & Cuisine', 'Taste authentic Nepali dishes and local flavors.'),
+('Accommodation & Tourism Services', 'Find hotels, homestays, and travel services.'),
+('Cities & Nightlife', 'Explore Nepal’s urban centers, cafes, art scenes, and nightlife.');

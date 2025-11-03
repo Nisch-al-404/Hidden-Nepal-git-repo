@@ -10,20 +10,38 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
+     {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <!-- Floating messages container: centered, max-content width -->
+        <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-auto max-w-max">
+            {% for category, message in messages %}
+            <div role="status" class="p-4 rounded-lg min-w-0 flex items-center justify-between shadow transition-opacity duration-200
+                {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                <span class="mr-4">{{ message }}</span>
+                <button aria-label="Dismiss" onclick="this.parentElement.remove()" class="text-sm hover:opacity-75">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
     <!-- Top Navbar -->
-    <nav class="fixed w-full bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-50">
-        <div class="flex items-center">
-            <img src="/static/images/logo.png" alt="Admin Logo" class="h-10 mr-3">
-            <span class="text-xl font-bold text-gray-800">Admin Panel</span>
+    <nav class="fixed w-full bg-white border-b border-gray-200 px-4 py-3 flex flex-col z-40">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="/static/images/logo.png" alt="Admin Logo" class="h-10 mr-3">
+                <span class="text-xl font-bold text-gray-800">Admin Panel</span>
+            </div>
+            
+            <div class="md:hidden">
+                <button id="menu-btn"
+                    class="text-gray-700 focus:outline-none hover:bg-gray-200 hover:text-gray-900 rounded p-1 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div class="md:hidden">
-            <button id="menu-btn"
-                class="text-gray-700 focus:outline-none hover:bg-gray-200 hover:text-gray-900 rounded p-1 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-        </div>
+
     </nav>
 
     <!-- Grid Layout: Sidebar + Main -->
@@ -31,7 +49,7 @@
         <!-- Sidebar -->
         <aside id="sidebar"
             class="top-14 left-0 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-gray-200 hidden md:flex flex-col z-30 transition-all duration-200">
-            <nav class="flex flex-col gap-1 fixed z-50 p-1">
+            <nav class="flex flex-col gap-1 fixed z-40 p-1">
                 <!-- Expand/Minimize Button (placed inside the border/sidebar) -->
                 <button id="sidebar-toggle"
                     class="bg-white border border-gray-200 rounded-full shadow p-1 transition hover:bg-gray-100 w-7 focus:outline-none md:block absolute top-3 left-16 md:left-64 ml-[-35px]">
@@ -185,7 +203,7 @@
 
     <!-- Mobile Sidebar (unchanged) -->
     <div id="mobile-menu" class="fixed inset-0 z-40 bg-black bg-opacity-40 md:hidden hidden">
-        <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col pt-8 z-50">
+        <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col pt-8 z-40">
             
             <nav class="flex flex-col gap-1 mt-8">
                 <!-- ... mobile sidebar links ... (keep as is) -->

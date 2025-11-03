@@ -5,9 +5,9 @@ from flask_login import UserMixin
 def get_db():
     return mysql.connector.connect(
         host="localhost",
-        user="root",               # Default XAMPP user
-        password="root1234",               # Default: empty (no password)
-        database="Project2"    # Your database name in phpMyAdmin
+        user="root",  # Default MySQL user
+        password="root1234",  # MySQL user password
+        database="Project2"  # Your MySQL database name
     )
 
 
