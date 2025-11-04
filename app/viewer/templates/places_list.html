@@ -56,8 +56,18 @@
         '<div class="col-span-full text-center text-gray-500">No places found.</div>';
     } else {
       for (const place of places) {
+        // If the server provided an exact distance, prefer that for filtering
         let highlight = false;
-        if (userLocation && place.latitude && place.longitude) {
+        if (place._distance_km !== undefined && place._distance_km !== null) {
+          const dist = parseFloat(place._distance_km);
+          // If a userRadius is set, only include places within that radius
+          if (typeof userRadius === "number" && !Number.isNaN(userRadius)) {
+            if (dist > userRadius) {
+              continue; // skip places outside requested radius
+            }
+          }
+          if (dist <= (userRadius || 0)) highlight = true;
+        } else if (userLocation && place.latitude && place.longitude) {
           const dist = getDistanceFromLatLonInKm(
             userLocation.lat,
             userLocation.lng,
@@ -68,6 +78,29 @@
         }
         const pid =
           place.place_id || place.id || place.ID || place.placeId || "";
+        // rating display
+        let avg =
+          place.average_rating !== undefined && place.average_rating !== null
+            ? parseFloat(place.average_rating)
+            : place.rating
+            ? parseFloat(place.rating)
+            : null;
+        let total =
+          place.total_reviews !== undefined && place.total_reviews !== null
+            ? parseInt(place.total_reviews)
+            : place.total_reviews || 0;
+        let starsHtml = "";
+        let ratingText = "";
+        if (!total) {
+          starsHtml = "☆☆☆☆☆";
+          ratingText = "No reviews yet";
+        } else {
+          const filled = Math.max(0, Math.min(5, Math.floor(avg || 0)));
+          starsHtml = "★".repeat(filled) + "☆".repeat(5 - filled);
+          ratingText =
+            avg !== null && !Number.isNaN(avg) ? avg.toFixed(1) : "0.0";
+        }
+
         html += `
         <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ${
           highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
@@ -86,6 +119,10 @@
                     (place.description.length > 100 ? "..." : "")
                   : ""
               }</p>
+              <div class="flex items-center gap-1 mt-2">
+                <span class="text-yellow-400">${starsHtml}</span>
+                <span class="text-xs text-gray-500">${ratingText}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -98,6 +135,12 @@
 
   // helper for sidebar "Show Near Me" integration
   async function loadPlacesNearby(lat, lng, radiusKm = 0.1) {
+    // remember user's location & radius for client-side rendering
+    try {
+      userLocation = { lat: lat, lng: lng };
+      userRadius = parseFloat(radiusKm) || 0.1;
+    } catch (ex) {}
+
     const res = await fetch(
       `/api/nearby?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(
         lng
@@ -105,6 +148,7 @@
     );
     const places = await res.json();
     renderPlaces(places);
+    return places;
   }
 
   function askLocationAndReload() {

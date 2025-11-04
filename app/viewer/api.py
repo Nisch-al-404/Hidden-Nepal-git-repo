@@ -83,6 +83,7 @@ def reviews(place_id):
 from flask import Blueprint, jsonify, request
 from app.models import get_db
 import requests
+import math
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -96,6 +97,44 @@ def search_places():
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM places WHERE name LIKE %s OR description LIKE %s", (f"%{query}%", f"%{query}%"))
     results = cursor.fetchall()
+
+    # Enrich with average rating and total reviews in a single aggregated query
+    try:
+        place_ids = []
+        id_key = None
+        for r in results:
+            if 'place_id' in r:
+                id_key = 'place_id'
+                break
+            if 'id' in r:
+                id_key = 'id'
+                break
+        if id_key:
+            for r in results:
+                pid = r.get(id_key)
+                if pid is not None:
+                    place_ids.append(pid)
+
+        if place_ids:
+            # build placeholder list
+            placeholders = ','.join(['%s'] * len(place_ids))
+            agg_q = f"SELECT place_id, AVG(rating) as avg_rating, COUNT(*) as total_reviews FROM Reviews WHERE place_id IN ({placeholders}) GROUP BY place_id"
+            cursor.execute(agg_q, tuple(place_ids))
+            aggs = cursor.fetchall()
+            agg_map = {row['place_id']: row for row in aggs}
+            for r in results:
+                pid = r.get(id_key)
+                agg = agg_map.get(pid)
+                if agg:
+                    r['average_rating'] = float(round(agg.get('avg_rating') or 0, 1)) if agg.get('avg_rating') is not None else None
+                    r['total_reviews'] = int(agg.get('total_reviews') or 0)
+                else:
+                    r['average_rating'] = None
+                    r['total_reviews'] = 0
+    except Exception:
+        # If aggregation fails, just continue without ratings
+        pass
+
     cursor.close()
     db.close()
     return jsonify(results)
@@ -108,6 +147,42 @@ def filter_places():
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM places WHERE status = %s", (status,))
     results = cursor.fetchall()
+
+    # Add average rating and total reviews for each place
+    try:
+        place_ids = []
+        id_key = None
+        for r in results:
+            if 'place_id' in r:
+                id_key = 'place_id'
+                break
+            if 'id' in r:
+                id_key = 'id'
+                break
+        if id_key:
+            for r in results:
+                pid = r.get(id_key)
+                if pid is not None:
+                    place_ids.append(pid)
+
+        if place_ids:
+            placeholders = ','.join(['%s'] * len(place_ids))
+            agg_q = f"SELECT place_id, AVG(rating) as avg_rating, COUNT(*) as total_reviews FROM Reviews WHERE place_id IN ({placeholders}) GROUP BY place_id"
+            cursor.execute(agg_q, tuple(place_ids))
+            aggs = cursor.fetchall()
+            agg_map = {row['place_id']: row for row in aggs}
+            for r in results:
+                pid = r.get(id_key)
+                agg = agg_map.get(pid)
+                if agg:
+                    r['average_rating'] = float(round(agg.get('avg_rating') or 0, 1)) if agg.get('avg_rating') is not None else None
+                    r['total_reviews'] = int(agg.get('total_reviews') or 0)
+                else:
+                    r['average_rating'] = None
+                    r['total_reviews'] = 0
+    except Exception:
+        pass
+
     cursor.close()
     db.close()
     return jsonify(results)
@@ -115,15 +190,69 @@ def filter_places():
 # Get nearby places (simple version: within latitude/longitude range)
 @api_bp.route('/nearby')
 def nearby_places():
-    lat = float(request.args.get('lat', 0))
-    lng = float(request.args.get('lng', 0))
-    radius = float(request.args.get('radius', 0.1))  # degrees, not km
+    # radius is expected in kilometers. We'll compute a bounding box to limit
+    # the DB query and then filter precisely using the haversine formula.
+    try:
+        lat = float(request.args.get('lat', None))
+        lng = float(request.args.get('lng', None))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'lat and lng query parameters are required and must be numbers'}), 400
+
+    try:
+        radius_km = float(request.args.get('radius', 0.1))
+    except (TypeError, ValueError):
+        radius_km = 0.1
+
+    # approximate degrees per km at given latitude
+    # 1 degree latitude ~= 111.32 km
+    deg_lat = radius_km / 111.32
+    # 1 degree longitude ~= 111.32 * cos(lat) km
+    lat_rad = math.radians(lat)
+    deg_lng = radius_km / (111.32 * max(0.000001, math.cos(lat_rad)))
+
+    min_lat = lat - deg_lat
+    max_lat = lat + deg_lat
+    min_lng = lng - deg_lng
+    max_lng = lng + deg_lng
+
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM places WHERE ABS(latitude - %s) < %s AND ABS(longitude - %s) < %s", (lat, radius, lng, radius))
-    results = cursor.fetchall()
+    # Select candidates within bounding box to reduce work
+    try:
+        cursor.execute(
+            "SELECT * FROM places WHERE latitude BETWEEN %s AND %s AND longitude BETWEEN %s AND %s",
+            (min_lat, max_lat, min_lng, max_lng),
+        )
+    except Exception:
+        # Fallback in case the table or columns have different names
+        cursor.execute("SELECT * FROM places")
+
+    candidates = cursor.fetchall()
     cursor.close()
     db.close()
+
+    # Haversine filter to compute great-circle distance in km
+    def haversine_km(lat1, lon1, lat2, lon2):
+        R = 6371.0
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    results = []
+    for p in candidates:
+        try:
+            plat = float(p.get('latitude') or p.get('lat') or 0)
+            plng = float(p.get('longitude') or p.get('lng') or 0)
+        except Exception:
+            continue
+        dist = haversine_km(lat, lng, plat, plng)
+        if dist <= radius_km:
+            # attach distance if useful
+            p['_distance_km'] = round(dist, 3)
+            results.append(p)
+
     return jsonify(results)
 
 # Get weather for a place (dummy data, replace with real API if needed)

@@ -2,8 +2,7 @@
 <div
   id="placesGrid"
   class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
->
-</div>
+></div>
 
 <!-- Modal for Place Details -->
 <div
@@ -79,6 +78,29 @@
         return "/static/images/" + url;
       }
       const imageUrl = normalizeImageUrl(place.image_url);
+      // compute rating display: prefer server-provided average and total_reviews
+      let avg =
+        place.average_rating !== undefined && place.average_rating !== null
+          ? parseFloat(place.average_rating)
+          : place.rating
+          ? parseFloat(place.rating)
+          : null;
+      let total =
+        place.total_reviews !== undefined && place.total_reviews !== null
+          ? parseInt(place.total_reviews)
+          : place.total_reviews || 0;
+      let starsHtml = "";
+      let ratingText = "";
+      if (!total) {
+        starsHtml = "☆☆☆☆☆";
+        ratingText = "No reviews yet";
+      } else {
+        const filled = Math.max(0, Math.min(5, Math.floor(avg || 0)));
+        starsHtml = "★".repeat(filled) + "☆".repeat(5 - filled);
+        ratingText =
+          avg !== null && !Number.isNaN(avg) ? avg.toFixed(1) : "0.0";
+      }
+
       html += `
       <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative group ${
         highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
@@ -107,12 +129,8 @@
               }</span>
             </div>
             <div class="flex items-center gap-1 mb-2">
-              <span class="text-yellow-400">${"★".repeat(
-                Math.round(place.rating || 0)
-              )}${"☆".repeat(5 - Math.round(place.rating || 0))}</span>
-              <span class="text-xs text-gray-500">${
-                place.rating ? place.rating.toFixed(1) : "No rating"
-              }</span>
+              <span class="text-yellow-400">${starsHtml}</span>
+              <span class="text-xs text-gray-500">${ratingText}</span>
             </div>
               <button onclick="viewDetails(event, '${pid}')" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
           </div>

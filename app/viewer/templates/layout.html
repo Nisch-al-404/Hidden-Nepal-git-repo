@@ -569,40 +569,25 @@
             </li>
           </ul>
         </div>
-        <button
-          onclick="showNearMe()"
-          class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition mb-4"
-        >
-          Show Places Near Me
-        </button>
-        <!-- Location Radius Selector -->
-        <div
-          id="sidebar-radius-ui"
-          class="flex flex-col gap-2 p-2 bg-blue-50 rounded-lg mb-2"
-        >
-          <label class="font-semibold text-blue-700 text-sm"
-            >Highlight places within
-            <select
-              id="sidebarRadiusSelect"
-              class="mx-2 px-2 py-1 border rounded"
-            >
-              <option value="0.5">500m</option>
-              <option value="1">1km</option>
-              <option value="2">2km</option>
-              <option value="5">5km</option>
-              <option value="10">10km</option>
-              <option value="20">20km</option>
-              <option value="30">30km</option>
-              <option value="40">40km</option>
-            </select>
-            radius of my location
-            <button
-              id="sidebarGetLocationBtn"
-              class="ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              My Location
-            </button>
+        <div class="mb-4">
+          <label class="block font-semibold text-blue-700 text-sm mb-2">
+            Show the places within the radius of
+            <input
+              id="sidebarRadiusInput"
+              type="number"
+              min="0.1"
+              step="0.1"
+              value="0.5"
+              class="mx-2 w-24 px-2 py-1 border rounded"
+            />
+            km of my location.
           </label>
+          <button
+            id="sidebarViewPlacesBtn"
+            class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            View Places
+          </button>
         </div>
       </aside>
       <main
@@ -683,54 +668,78 @@
         else window.location.href = "/places";
       }
 
-      function showNearMe() {
-        if (!navigator.geolocation)
-          return alert("Geolocation is not supported by your browser.");
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const lat = pos.coords.latitude,
-            lng = pos.coords.longitude;
-          if (
-            document.getElementById("placesGrid") &&
-            window.loadPlacesNearby
-          ) {
-            window.loadPlacesNearby(lat, lng);
-          } else {
-            window.location.href = `/places?nearby=1&lat=${lat}&lng=${lng}`;
-          }
-        });
-      }
+      // Deprecated: old showNearMe implementation replaced by View Places flow
+      // New handler defined below: sidebarViewPlacesHandler
 
-      // Sidebar location/radius UI logic (syncs with homepage logic)
+      // Sidebar View Places UI logic (new)
       window.sidebarUserLocation = null;
       window.sidebarUserRadius = 0.5;
-      function sidebarAskLocationAndReload() {
-        if (!navigator.geolocation)
-          return alert("Geolocation is not supported by your browser.");
-        navigator.geolocation.getCurrentPosition(function (pos) {
-          window.sidebarUserLocation = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          };
-          if (window.setUserLocationAndReload)
-            window.setUserLocationAndReload(
-              window.sidebarUserLocation,
-              window.sidebarUserRadius
-            );
-        });
+
+      function sidebarViewPlacesHandler() {
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser.");
+          return;
+        }
+
+        const input = document.getElementById("sidebarRadiusInput");
+        let radiusKm = 0.5;
+        if (input) {
+          const v = parseFloat(input.value);
+          if (!Number.isNaN(v) && v > 0) radiusKm = v;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            // If the current page supports client-side nearby loading, use it
+            if (
+              document.getElementById("placesGrid") &&
+              window.loadPlacesNearby
+            ) {
+              // store for potential reuse
+              window.sidebarUserLocation = { lat: lat, lng: lng };
+              window.sidebarUserRadius = radiusKm;
+              // Also set globals commonly used by the places list template
+              window.userLocation = { lat: lat, lng: lng };
+              window.userRadius = radiusKm;
+              // request and render nearby places
+              try {
+                window.loadPlacesNearby(lat, lng, radiusKm);
+              } catch (err) {
+                console.error("Error calling loadPlacesNearby:", err);
+              }
+
+              // Also fetch to detect empty result and inform the user
+              fetch(
+                `/api/nearby?lat=${encodeURIComponent(
+                  lat
+                )}&lng=${encodeURIComponent(lng)}&radius=${encodeURIComponent(
+                  radiusKm
+                )}`
+              )
+                .then((r) => r.json())
+                .then((data) => {
+                  if (!data || (Array.isArray(data) && data.length === 0)) {
+                    alert("No nearby places found.");
+                  }
+                })
+                .catch((err) => console.error("Nearby fetch error:", err));
+            } else {
+              // fallback: redirect to server-side places list (include radius)
+              window.location.href = `/places?nearby=1&lat=${lat}&lng=${lng}&radius=${radiusKm}`;
+            }
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+            alert("Location access denied or unavailable.");
+          }
+        );
       }
-      function sidebarOnRadiusChange(e) {
-        window.sidebarUserRadius = parseFloat(e.target.value);
-        if (window.setUserLocationAndReload)
-          window.setUserLocationAndReload(
-            window.sidebarUserLocation,
-            window.sidebarUserRadius
-          );
-      }
+
       document.addEventListener("DOMContentLoaded", function () {
-        const btn = document.getElementById("sidebarGetLocationBtn");
-        const sel = document.getElementById("sidebarRadiusSelect");
-        if (btn) btn.onclick = sidebarAskLocationAndReload;
-        if (sel) sel.onchange = sidebarOnRadiusChange;
+        const viewBtn = document.getElementById("sidebarViewPlacesBtn");
+        if (viewBtn) viewBtn.onclick = sidebarViewPlacesHandler;
       });
       // Attach category link handlers for dynamic loading
       document.addEventListener("DOMContentLoaded", function () {
