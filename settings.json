@@ -1,0 +1,16 @@
+{
+    "site_name": "Hidden Nepal",
+    "logo": "images/20251011_062129.jpg",
+    "favicon": "images/favicon.ico",
+    "homepage_banner_text": "Welcome to Hidden Nepal \u2013 Discover the unseen beauty of Nepal.",
+    "homepage_banner_image": "uploads/default_banner.jpg",
+    "contact_email": "contact@hiddennepal.com",
+    "contact_phone": "+977-9800000000",
+    "contact_address": "Kathmandu, Nepal",
+    "footer_text": null,
+    "social_fb": "https://facebook.com/hiddennepal",
+    "social_ig": "https://instagram.com/hiddennepal",
+    "social_yt": "https://youtube.com/@hiddennepal",
+    "maintenance_mode": false,
+    "maintenance_message": "We'll be back soon."
+}

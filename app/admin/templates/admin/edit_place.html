@@ -94,7 +94,9 @@
     <div class="grid grid-cols-3 gap-4">
       {% for img in images %}
         <div class="border rounded-lg overflow-hidden shadow">
-          <img src="/static/uploads/{{ img.image_url }}" class="w-full h-32 object-cover">
+          <a href="{{ img.image_url | replace('app', '') }}" target="_blank" rel="noopener noreferrer">
+            <img src="{{ img.image_url | replace('app', '') }}" class="w-full h-32 object-cover">
+          </a>
           <div class="p-2 text-center">
             <a href="{{ url_for('admin.delete_image', image_id=img.image_id, place_id=place.place_id) }}"
                class="text-red-600 hover:underline">Delete</a>

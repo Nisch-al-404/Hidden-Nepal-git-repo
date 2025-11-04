@@ -1,9 +1,18 @@
 from functools import wraps
 from . import admin_bp
-from flask import flash, redirect, render_template,abort, url_for
+from flask import flash, redirect, render_template, abort, url_for, current_app
 from flask_login import login_required, current_user
 from app.models import get_db
 from flask import request
+import os,json
+import uuid
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
+
+
+SETTINGS_FILE = 'settings.json'
+UPLOAD_FOLDER = "app/static/images/"
+
 
 def admin_required(f):
     @wraps(f)
@@ -350,7 +359,7 @@ def manage_users():
     # print(users)
 
 
-    return render_template('admin/manage_users.html',users=users)
+    return render_template('admin/manage_users.html',users=users,active_page='manage_users')
 
 @admin_bp.route('manage_users/edit/<int:user_id>')
 @admin_required
@@ -410,7 +419,6 @@ def delete_user(user_id):
     cur = con.cursor()
     try:
         cur.execute("DELETE FROM Users WHERE user_id=%s", (user_id,))
-        print("heeeeeeeeeeeelllllllllloooooooooooooo",user_id)
         con.commit()
         flash("User deleted successfully.", "success")
     except Exception as e:
@@ -423,9 +431,140 @@ def delete_user(user_id):
     return redirect(url_for('admin.manage_users'))
 
 
-@admin_bp.route('contributor_requests')
-def contributor_requests():
-    return render_template('admin/contributor_requests.html')
-@admin_bp.route('settings')
+
+@admin_bp.route('/settings')
+@admin_required
+@login_required
 def settings():
-    return render_template('admin/site_settings.html')
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get admin user details
+        cursor.execute("SELECT * FROM Users WHERE user_id = %s", (current_user.id,))
+        admin_user = cursor.fetchone()
+        
+        # Get site settings
+        # Load settings from JSON file
+        settings = load_settings() or {}
+        
+    except Exception as e:
+        print("Error fetching settings:", e)
+        flash("Error loading settings", "error")
+        settings = {}
+        admin_user = {}
+    finally:
+        cursor.close()
+        conn.close()
+
+        return render_template('admin/setting.html', 
+                             admin_user=admin_user,
+                             active_page='settings')
+    
+@admin_bp.route('/update_profile', methods=['POST'])
+@admin_required
+@login_required
+def update_profile():
+        conn = get_db()
+        cursor = conn.cursor()
+        try:
+                
+            # Prepare update fields
+            fields = []
+            params = []
+    
+            profile_name = request.form.get("profile_name")
+            profile_email = request.form.get("profile_email")
+            if profile_name is not None:
+                fields.append("username=%s")
+                params.append(profile_name)
+            if profile_email is not None:
+                fields.append("email=%s")
+                params.append(profile_email)
+    
+            # password (optional)
+            new_password = request.form.get("profile_password")
+            if new_password:
+                hashed = generate_password_hash(new_password)
+                fields.append("password_hash=%s")
+                params.append(hashed)
+    
+            # # profile picture (can be None to clear)
+            # if "profile_picture" in request.files or request.form.get("remove_profile_picture"):
+            #     fields.append("profile_picture=%s")
+            #     params.append(new_profile_picture)
+    
+            if fields:
+                sql = f"UPDATE Users SET {', '.join(fields)} WHERE user_id=%s"
+                params.append(current_user.id)
+                cursor.execute(sql, tuple(params))
+                conn.commit()
+                flash("Profile updated successfully.", "success")
+            else:
+                flash("No changes detected.", "info")
+    
+        except Exception as e:
+            conn.rollback()
+            print("Error updating admin profile:", e)
+            flash("An error occurred while updating the profile.", "danger")
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except Exception:
+                pass
+    
+        return redirect(url_for('admin.settings'))
+
+
+
+
+
+
+
+
+# Helper functions
+def load_settings():
+    if os.path.exists(SETTINGS_FILE):
+        with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+
+def save_settings(data):
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4)
+
+
+# --- Route to handle form submission ---
+@admin_bp.route('/update_settings', methods=['POST'])
+@login_required
+def update_settings():
+    settings = load_settings()
+
+    # Form fields
+    settings['site_name'] = request.form.get('site_name')
+    settings['homepage_banner_text'] = request.form.get('homepage_banner_text')
+    settings['contact_email'] = request.form.get('contact_email')
+    settings['contact_phone'] = request.form.get('contact_phone')
+    settings['contact_address'] = request.form.get('contact_address')
+    settings['footer_text'] = request.form.get('footer_text')
+    settings['social_fb'] = request.form.get('social_fb')
+    settings['social_ig'] = request.form.get('social_ig')
+    settings['social_yt'] = request.form.get('social_yt')
+    settings['maintenance_mode'] = True if request.form.get('maintenance_mode') else False
+    settings['maintenance_message'] = request.form.get('maintenance_message')
+
+    # Handle uploads (logo, favicon, banner)
+    for field in ['logo', 'favicon', 'homepage_banner_image']:
+        file = request.files.get(field)
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(path)
+            settings[field] = f'images/{filename}'  # Store relative path for templates
+
+    # Save settings to file
+    save_settings(settings)
+    flash("✅ Site configuration updated successfully!", "success")
+    return redirect(url_for('admin.settings'))

@@ -1,0 +1,191 @@
+{%extends "admin/layout.html"%}
+
+{%block title%}Settings - Admin Dashboard{%endblock%}
+
+{%block content%}
+
+<div class="max-w-5xl mx-auto mt-10 space-y-8">
+    <!-- Admin Profile Settings -->
+    <section class="bg-white shadow-lg rounded-2xl p-6">
+        <div class="flex items-start justify-between">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-1">⚙️ Admin Profile Settings</h2>
+            <p class="text-sm text-gray-500">Update name, email, password, picture & security</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.update_profile') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+               
+
+                <!-- Basic info -->
+                <div class="col-span-2 space-y-4">
+                    <div>
+                        <label for="profile_name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input id="profile_name" name="profile_name" type="text" value="{{ admin_user.username }}" required
+                               class="w-full rounded-lg border border-gray-300 p-2.5 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="profile_email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input id="profile_email" name="profile_email" type="email" value="{{ admin_user.email }}" required
+                               class="w-full rounded-lg border border-gray-300 p-2.5 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="profile_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                        <input id="profile_password" name="profile_password" type="password" placeholder="Leave blank to keep current"
+                               class="w-full rounded-lg border border-gray-300 p-2.5 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+
+        
+
+            <div class="flex">
+                <button type="submit" class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700">Save Profile</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Site Configuration -->
+    <section class="bg-white shadow-lg rounded-2xl p-6">
+        <div class="flex items-start justify-between">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-1">🌐 Site Configuration</h2>
+            <p class="text-sm text-gray-500">Configure site-wide settings, branding and contact info</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.update_settings') }}" enctype="multipart/form-data" class="mt-6">
+            <!-- Branding Section -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Branding</h3>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div>
+                        <label for="site_name" class="block text-sm font-medium text-gray-700 mb-1">Website Name</label>
+                        <input id="site_name" name="site_name" type="text" value="{{ settings.site_name or 'Hidden Nepal' }}" required
+                               class="w-full rounded-lg border border-gray-300 p-2.5 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <label class="block text-sm font-medium text-gray-700">Logo & Favicon</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 h-12 bg-gray-100 border flex items-center justify-center">
+                                    {% if settings.logo %}
+                                        <img src="{{ url_for('static', filename=settings.logo) }}" alt="Logo" class="object-contain h-full">
+                                    {% else %}
+                                        <span class="text-xs text-gray-400">Logo</span>
+                                    {% endif %}
+                                </div>
+                                <input type="file" name="logo" accept="image/*" class="text-sm">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-10 h-10 bg-gray-100 border flex items-center justify-center">
+                                    {% if settings.favicon %}
+                                        <img src="{{ url_for('static', filename=settings.favicon) }}" alt="Favicon" class="object-contain h-full">
+                                    {% else %}
+                                        <span class="text-xs text-gray-400">ICO</span>
+                                    {% endif %}
+                                </div>
+                                <input type="file" name="favicon" accept="image/*" class="text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Homepage Settings -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Homepage</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="homepage_banner_text" class="block text-sm font-medium text-gray-700 mb-1">Banner Text</label>
+                        <input id="homepage_banner_text" name="homepage_banner_text" type="text" value="{{ settings.homepage_banner_text }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5" placeholder="Welcome to Hidden Nepal">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Banner Image</label>
+                        <div class="flex items-center gap-4">
+                            <div class="w-48 h-24 bg-gray-100 border flex items-center justify-center">
+                                {% if settings.homepage_banner_image %}
+                                    <img src="{{ url_for('static', filename=settings.homepage_banner_image) }}" alt="Banner" class="object-cover h-full w-full">
+                                {% else %}
+                                    <span class="text-xs text-gray-400">Banner</span>
+                                {% endif %}
+                            </div>
+                            <input type="file" name="homepage_banner_image" accept="image/*" class="text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Contact Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="contact_email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input id="contact_email" name="contact_email" type="email" value="{{ settings.contact_email }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5">
+                    </div>
+                    <div>
+                        <label for="contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input id="contact_phone" name="contact_phone" type="text" value="{{ settings.contact_phone }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="contact_address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <textarea id="contact_address" name="contact_address" rows="2"
+                                  class="w-full rounded-lg border border-gray-300 p-2.5">{{ settings.contact_address }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media Links -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Social Media</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="social_fb" class="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                        <input id="social_fb" name="social_fb" type="url" value="{{ settings.social_fb }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5" placeholder="https://facebook.com/yourpage">
+                    </div>
+                    <div>
+                        <label for="social_ig" class="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                        <input id="social_ig" name="social_ig" type="url" value="{{ settings.social_ig }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5" placeholder="https://instagram.com/yourpage">
+                    </div>
+                    <div>
+                        <label for="social_yt" class="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                        <input id="social_yt" name="social_yt" type="url" value="{{ settings.social_yt }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5" placeholder="https://youtube.com/channel/..">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Mode -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Maintenance Mode</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="maintenance_mode" value="1" class="h-5 w-5" {% if settings.maintenance_mode %}checked{% endif %}>
+                            <span class="text-sm text-gray-700">Enable Maintenance Mode</span>
+                        </label>
+                        <span class="text-sm text-gray-500">Current: <span class="font-medium text-gray-700">{% if settings.maintenance_mode %}On{% else %}Off{% endif %}</span></span>
+                    </div>
+                    <div class="w-1/2">
+                        <input id="maintenance_message" name="maintenance_message" type="text" value="{{ settings.maintenance_message }}"
+                               class="w-full rounded-lg border border-gray-300 p-2.5" placeholder="We'll be back soon.">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="bg-blue-600 text-white rounded-lg px-6 py-2 hover:bg-blue-700">Save Changes</button>
+            </div>
+        </form>
+    </section>
+</div>
+{%endblock%}
+
+
