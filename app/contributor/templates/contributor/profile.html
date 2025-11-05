@@ -1,0 +1,89 @@
+{% extends "contributor/contributor_layout.html" %}
+{% block content %}
+<section class="bg-gradient-to-b from-emerald-50 to-amber-50 min-h-screen py-10 px-4 font-[Poppins]">
+  <div class="max-w-6xl mx-auto space-y-10">
+
+    <!-- User Info -->
+    <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8 hover:shadow-lg transition duration-300">
+      <h2 class="text-2xl font-bold text-emerald-800 mb-6 flex items-center gap-2">
+        👤 <span>Profile</span>
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700 text-base">
+        <p><span class="font-semibold text-emerald-700">Username:</span> {{ user.username }}</p>
+        <p><span class="font-semibold text-emerald-700">Email:</span> {{ user.email }}</p>
+        <p class="sm:col-span-2"><span class="font-semibold text-emerald-700">Joined:</span> {{ user.created_at.strftime('%B %d, %Y') }}</p>
+      </div>
+    </div>
+
+    <!-- Contribution Stats -->
+    <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8 hover:shadow-lg transition duration-300">
+      <h2 class="text-2xl font-bold text-emerald-800 mb-6 flex items-center gap-2">
+        📊 <span>Contribution Stats</span>
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+        <div class="p-4 bg-yellow-50 rounded-xl hover:scale-105 transition">
+          <p class="text-3xl font-extrabold text-yellow-600 break-words">{{ counts.pending }}</p>
+          <p class="text-gray-600 text-sm font-medium">Pending</p>
+        </div>
+        <div class="p-4 bg-green-50 rounded-xl hover:scale-105 transition">
+          <p class="text-3xl font-extrabold text-green-600 break-words">{{ counts.approved }}</p>
+          <p class="text-gray-600 text-sm font-medium">Approved</p>
+        </div>
+        <div class="p-4 bg-red-50 rounded-xl hover:scale-105 transition">
+          <p class="text-3xl font-extrabold text-red-600 break-words">{{ counts.rejected }}</p>
+          <p class="text-gray-600 text-sm font-medium">Rejected</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-xl hover:scale-105 transition">
+          <p class="text-3xl font-extrabold text-blue-600 break-words">{{ total }}</p>
+          <p class="text-gray-600 text-sm font-medium">Total</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8 hover:shadow-lg transition duration-300">
+      <div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+        <h2 class="text-2xl font-bold text-emerald-800 flex items-center gap-2">
+          🕒 <span>Recent Submissions</span>
+        </h2>
+        <a href="{{ url_for('contributor.add_place') }}"
+           class="inline-block bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium px-5 py-2 rounded-full shadow-md transition-all duration-300 hover:shadow-lg">
+          ➕ Add New Place
+        </a>
+      </div>
+
+      {% if recent %}
+      <ul class="divide-y divide-gray-200">
+        {% for place in recent %}
+        <li class="py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 hover:bg-gray-50 rounded-lg px-3 transition">
+          <div class="truncate">
+            <p class="font-semibold text-gray-800 text-lg truncate">{{ place.name }}</p>
+            <p class="text-sm text-gray-500">{{ place.created_at.strftime('%B %d, %Y') }}</p>
+          </div>
+          <span
+            class="px-4 py-1 text-sm rounded-full font-medium whitespace-nowrap
+            {% if place.status == 'approved' %} bg-green-100 text-green-700
+            {% elif place.status == 'pending' %} bg-yellow-100 text-yellow-700
+            {% else %} bg-red-100 text-red-700 {% endif %}">
+            {{ place.status | capitalize }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <!-- Empty State -->
+      <div class="flex flex-col items-center justify-center text-center py-12">
+        <div class="text-6xl mb-3">🗺️</div>
+        <p class="text-gray-700 text-lg mb-4">You haven’t submitted any places yet.</p>
+        <a href="{{ url_for('contributor.add_place') }}"
+           class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-2 rounded-full font-medium shadow-md transition-all duration-300 hover:shadow-lg">
+          ➕ Add Your First Place
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+

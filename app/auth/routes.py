@@ -1,5 +1,6 @@
 import mysql.connector
-from flask import render_template, request, redirect, url_for, session, flash
+
+from flask import render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, current_user, logout_user
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,7 +13,9 @@ from app.models import get_db, User
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('contributor.contributor_dashboard'))
+        if current_user.role == 'admin':
+            return redirect(url_for('admin.admin_panel'))
+        return redirect(url_for('contributor.my_contributions'))
 
     if request.method == 'POST':
 
@@ -22,10 +25,13 @@ def login():
         conn=None
         cursor=None
         try:
+            print("Attempting to connect to the database...")
             conn = get_db()
+            print(conn)
             cursor = conn.cursor(dictionary=True)
 
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            print("Executing query for email:", email)
             user = cursor.fetchone()
 
             if user is None:
@@ -33,15 +39,14 @@ def login():
                 return render_template("auth/login.html")
 
             if user:
-
-                print("Entered:", password)
-                print("Stored:", user['password_hash'])
-                print("Check:", check_password_hash(user['password_hash'], password))
-
                 if user and check_password_hash(user['password_hash'], password):
-                    user_obj = User(user['id'],user['username'], user['email'], user['role'])
-                    login_user(user_obj)
+                    user_obj = User(user['user_id'],user['username'], user['email'], user['role'])
+                    login_user(user_obj, remember=True)
                     flash("🎉 Logged in successfully!", "success")
+
+                    if user['role'] == 'admin':
+                        return redirect(url_for('admin.admin_panel'))
+
                     return redirect(url_for('contributor.contributor_dashboard'))
                 else:
                     flash("❌ Invalid email or password", "danger")
@@ -70,22 +75,30 @@ def register():
         try:
             conn = get_db()
             cursor = conn.cursor()
-            print("Entered:", password)
-            print("Entered:", email)
+           
 
             cursor.execute("""
-                           INSERT INTO users (username, email, password_hash, role, can_contribute)
-                           VALUES (%s, %s, %s, 'contributor', TRUE)
+                           INSERT INTO users  (username, email, password_hash, role, can_contribute)
+                           VALUES (%s, %s, %s, 'admin', TRUE)
                            """, (username, email, hashed_password))
             conn.commit()
             flash("🎉 Registered successfully!", "success")
             return redirect(url_for('auth.login'))
+
         except mysql.connector.IntegrityError:
             flash("⚠️ Email already exists!", "danger")
+        except mysql.connector.Error:
+            flash("💥 Database error ", "danger")
+        except KeyError:
+            flash("🧩 Missing form data ", "danger")
+        except Exception:
+            flash(f"⚠️ Unexpected error occurred", "danger")
+
+
 
         finally:
-            cursor.close()
-            conn.close()
+            if cursor: cursor.close()
+            if conn: conn.close()
 
 
     return render_template("auth/register.html")

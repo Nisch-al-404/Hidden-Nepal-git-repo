@@ -31,7 +31,13 @@ def close_db(exception=None):
 
 
 
+
+
+
 class User(UserMixin):
+    def __init__(self, user_id,name, email, role):
+      
+        self.id = user_id
     def __init__(self, user_id,name, email, role):
       
         self.id = user_id

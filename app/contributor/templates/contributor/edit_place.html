@@ -1,0 +1,119 @@
+{% extends "contributor/contributor_layout.html" %}
+{% block content %}
+<section class="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-10 px-4 flex justify-center items-start">
+  <div class="w-full max-w-4xl bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl p-8 sm:p-10 border border-gray-100">
+    
+    <!-- Heading -->
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-extrabold text-green-700 tracking-tight mb-2">
+        ✏️ Edit Place – {{ place.name }}
+      </h2>
+      <div class="mx-auto w-24 h-1 bg-gradient-to-r from-green-400 to-teal-400 rounded-full"></div>
+      <p class="text-gray-600 mt-2 text-sm sm:text-base">
+        Update your place information and images below
+      </p>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+      
+      <!-- Place Name -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Place Name</label>
+        <input type="text" name="name" value="{{ place.name }}" required
+               class="w-full px-4 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Description</label>
+        <textarea name="description" required rows="4"
+                  class="w-full px-4 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">{{ place.description }}</textarea>
+      </div>
+
+      <!-- Coordinates -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Latitude</label>
+          <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}" required
+                 class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Longitude</label>
+          <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}" required
+                 class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Select Location on Map</label>
+        <div id="map" class="w-full h-72 rounded-xl shadow border"></div>
+      </div>
+
+      <!-- Current Images -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Current Images</label>
+        <div class="flex flex-wrap gap-4">
+          {% if images %}
+            {% for img in images %}
+              <div class="rounded-xl shadow-md w-40 h-28 overflow-hidden border border-gray-200">
+                <img src="/{{ img.image_url| replace('app/', '') }}" alt="Place Image {{ img.image_id }}"
+                     class="w-full h-full object-cover">
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-gray-500">No images uploaded.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Upload New Image -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-2">Upload New Image (optional)</label>
+        <input type="file" name="images" multiple accept="image/*"
+               class="w-full px-3 py-2 border rounded-xl bg-gray-50 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-center">
+        <button type="submit"
+                class="px-8 py-3 bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+           Update Place
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Leaflet JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+      const map = L.map('map').setView(
+          [parseFloat('{{ place.latitude|default(0) }}'), parseFloat('{{ place.longitude|default(0) }}')],
+          10
+      );
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      let marker = L.marker([
+          parseFloat('{{ place.latitude|default(0) }}'),
+          parseFloat('{{ place.longitude|default(0) }}')
+      ]).addTo(map);
+
+      map.on('click', function(e) {
+          const lat = e.latlng.lat.toFixed(6);
+          const lng = e.latlng.lng.toFixed(6);
+
+          document.getElementById('latitude').value = lat;
+          document.getElementById('longitude').value = lng;
+
+          marker.setLatLng(e.latlng);
+      });
+  </script>
+</section>
+{% endblock %}
+
+

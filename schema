@@ -1,0 +1,120 @@
+-- CREATE TABLE Users (
+--     user_id        INT AUTO_INCREMENT PRIMARY KEY,
+--     username       VARCHAR(150) NOT NULL,
+--     email          VARCHAR(150) UNIQUE NOT NULL,
+--     password_hash  TEXT NOT NULL,
+--     role           ENUM( 'contributor', 'admin'),
+--     can_contribute tinyint(1),
+-- 	is_active tinyint (1),
+--     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+
+
+
+
+
+-- CREATE TABLE Places (
+--     place_id       INT AUTO_INCREMENT PRIMARY KEY,
+--     name           VARCHAR(200) NOT NULL,
+--     description    TEXT,
+--     location       VARCHAR(200),
+--     latitude       DECIMAL(9,6),
+--     longitude      DECIMAL(9,6),
+--     submitted_by   INT,
+--     status         ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+--     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (submitted_by) REFERENCES Users(user_id) ON DELETE SET NULL
+-- );
+
+-- CREATE TABLE Place_Images (
+--     image_id       INT AUTO_INCREMENT PRIMARY KEY,
+--     place_id       INT NOT NULL,
+--     image_url      VARCHAR(255) NOT NULL,
+--     uploaded_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (place_id) REFERENCES Places(place_id) ON DELETE CASCADE
+-- );
+
+-- 4. Reviews Table
+-- CREATE TABLE Reviews (
+--     review_id      INT AUTO_INCREMENT PRIMARY KEY,
+--     place_id       INT NOT NULL,
+--     user_id        INT NOT NULL,
+--     rating         INT CHECK (rating BETWEEN 1 AND 5),
+--     comment        TEXT,
+--     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (place_id) REFERENCES Places(place_id) ON DELETE CASCADE,
+--     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+-- );
+
+-- CREATE TABLE Admin_Actions (
+--     action_id      INT AUTO_INCREMENT PRIMARY KEY,
+--     admin_id       INT NOT NULL,
+--     place_id       INT NOT NULL,
+--     action         ENUM('approved', 'rejected') NOT NULL,
+--     action_date    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     notes          TEXT,
+--     FOREIGN KEY (admin_id) REFERENCES Users(user_id),
+--     FOREIGN KEY (place_id) REFERENCES Places(place_id) ON DELETE CASCADE
+-- );
+
+-- INSERT INTO Users (username, email, password_hash, role, can_contribute, is_active)
+-- VALUES 
+-- ('nischal', 'nischal@example.com', 'hashed_pass1', 'admin', 1, 1),
+-- ('achyut', 'achyut@example.com', 'hashed_pass2', 'contributor', 1, 1),
+-- ('sita', 'sita@example.com', 'hashed_pass3', 'contributor', 1, 1),
+-- ('ram', 'ram@example.com', 'hashed_pass4', 'contributor', 0, 1),
+-- ('priya', 'priya@example.com', 'hashed_pass5', 'contributor', 1, 0);
+
+-- INSERT INTO Places (name, description, location, latitude, longitude, submitted_by, status)
+-- VALUES
+-- ('Phewa Lake', 'A beautiful freshwater lake in Pokhara.', 'Pokhara, Nepal', 28.2096, 83.9856, 2, 'approved'),
+-- ('Swayambhunath Stupa', 'An ancient religious complex atop a hill.', 'Kathmandu, Nepal', 27.7149, 85.2900, 3, 'approved'),
+-- ('Rara Lake', 'Largest lake in Nepal surrounded by mountains.', 'Mugu, Nepal', 29.5000, 82.0833, 2, 'pending'),
+-- ('Chitwan National Park', 'Famous for wildlife safari and one-horned rhino.', 'Chitwan, Nepal', 27.5341, 84.5055, 4, 'rejected');
+
+
+
+-- INSERT INTO Place_Images (place_id, image_url)
+-- VALUES
+-- (1, 'phewa1.jpg'),
+-- (1, 'phewa2.jpg'),
+-- (2, 'swayambhu.jpg'),
+-- (3, 'rara.jpg'),
+-- (4, 'chitwan.jpg');
+
+-- INSERT INTO Reviews (place_id, user_id, rating, comment)
+-- VALUES
+-- (1, 3, 5, 'Absolutely stunning lake! Must visit.'),
+-- (1, 4, 4, 'Nice boating experience, but a bit crowded.'),
+-- (2, 2, 5, 'Peaceful and spiritual place.'),
+-- (3, 3, 4, 'Remote but worth the trip!'),
+-- (4, 5, 2, 'Didn’t enjoy much due to hot weather.');
+
+
+
+
+-- INSERT INTO Admin_Actions (admin_id, place_id, action, notes)
+-- VALUES
+-- (1, 1, 'approved', 'Verified details and approved.'),
+-- (1, 2, 'approved', 'Looks authentic.'),
+-- (1, 4, 'rejected', 'Insufficient details provided.');
+
+
+
+
+
+
+-- View all users
+SELECT * FROM Users;
+
+-- -- View all places
+ SELECT * FROM Places;
+
+-- -- View all place images
+SELECT * FROM Place_Images;
+
+-- -- View all reviews
+SELECT * FROM Reviews;
+
+-- -- View all admin actions
+SELECT * FROM Admin_Actions;
