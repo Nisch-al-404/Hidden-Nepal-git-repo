@@ -76,11 +76,17 @@ def register():
             conn = get_db()
             cursor = conn.cursor()
            
+           
 
             cursor.execute("""
                            INSERT INTO users  (username, email, password_hash, role, can_contribute)
-                           VALUES (%s, %s, %s, 'admin', TRUE)
+                           VALUES (%s, %s, %s, 'contributor', TRUE)
                            """, (username, email, hashed_password))
+        
+            """admin_nischal@gmail.com
+               111111
+            
+            """
             conn.commit()
             flash("🎉 Registered successfully!", "success")
             return redirect(url_for('auth.login'))

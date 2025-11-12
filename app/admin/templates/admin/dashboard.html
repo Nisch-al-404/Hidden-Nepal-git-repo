@@ -2,6 +2,8 @@
 
 
 {% block content %}
+
+   
 <div class="min-h-screen bg-gray-100">
     <div class="flex">
         <!-- Main Content -->
@@ -208,7 +210,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap hidden">{{ activity.action_id }}</td>
                                     <!-- Place: clickable link -->
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <a href="/admin/place/{{ activity.place_id }}" class="text-indigo-600 hover:text-indigo-900">
+                                        <a href="/admin/manage_places/view/{{ activity.place_id }}" class="text-indigo-600 hover:text-indigo-900">
                                             {{ activity.place_name }}
                                         </a>
                                     </td>

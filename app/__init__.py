@@ -1,11 +1,26 @@
 from flask import Flask, Blueprint, session
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from app.models import get_db, User
+import json
 
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key_here'
+
+    @app.context_processor
+    def inject_settings():
+        try:
+            with open('settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+        except FileNotFoundError:
+            settings = {}
+
+        topuser=load_user(current_user.id if current_user.is_authenticated else None)
+        # print(current_user.name)
+       
+        
+        return dict(settings=settings,topuser=topuser)
 
     # Flask-Login Setup
     login_manager = LoginManager()

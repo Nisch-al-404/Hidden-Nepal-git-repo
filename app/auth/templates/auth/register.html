@@ -2,56 +2,143 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Register</title>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/{{settings.favicon}}" type="image/x-icon">
+  <title>Register</title>
+
+
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    .error-message {
+      color: #ef4444;
+      /* Tailwind red-500 */
+      font-size: 0.75rem;
+      /* text-xs */
+      margin-top: 0.25rem;
+    }
+  </style>
 </head>
 
-<body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="max-w-md mx-auto mt-6">
-        {% for category, message in messages %}
-        <div x-data="{ show: true }" x-show="show"
-            class="mb-4 px-4 py-3 rounded flex items-center justify-between {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}">
-            <span>{{ message }}</span>
-            <button type="button" @click="show = false"
-                class="ml-4 text-xl font-bold focus:outline-none">&times;</button>
-        </div>
-        {% endfor %}
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-sm sm:max-w-md px-4 z-50">
+    {% for category, message in messages %}
+    <div x-data="{ show: true }" x-show="show" class="mb-3 px-4 py-3 rounded-lg shadow text-sm sm:text-base transition-all duration-300
+        {% if category == 'success' %}bg-green-100 text-green-800
+        {% elif category == 'error' %}bg-red-100 text-red-800
+        {% else %}bg-blue-100 text-blue-800{% endif %}">
+      <div class="flex items-center justify-between">
+        <span>{{ message }}</span>
+        <button type="button" @click="show = false"
+          class="ml-4 text-lg font-bold leading-none focus:outline-none">&times;</button>
+      </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    {% endif %}
-    {% endwith %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
 
-    <form action="{{url_for('auth.register')}}" method="POST"
-        class="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+  <form method="POST" class="w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-5"
+    x-data="{ emailSent: {% if 'email_sent' in session and session['email_sent'] %}true{% else %}false{% endif %} }"
+    id="registrationForm" onsubmit="return validate(event)">
 
-        <label for="username" class="block mb-2 font-medium text-gray-700">Username</label>
-        <input type="text" name="username" id="username" required placeholder="Enter your Full name"
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4" />
+    <h2 class="text-xl sm:text-2xl font-bold text-center text-gray-800">Create an Account</h2>
 
-        <label for="email" class="block mb-2 font-medium text-gray-700">Email</label>
+    <div x-show="!emailSent" class="space-y-5">
+      <div>
+        <label for="username" class="block text-gray-700 text-sm mb-2">Username</label>
+        <input type="text" name="username" id="username" required placeholder="Enter your full name"
+          value="{{ request.form.username if request.form.username is defined else '' }}"
+          class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <span id="usernameError" class="error-message"></span>
+      </div>
+
+      <div>
+        <label for="email" class="block text-gray-700 text-sm mb-2">Email</label>
         <input type="email" name="email" id="email" required placeholder="Enter your email"
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4" />
+          value="{{ request.form.email if request.form.email is defined else '' }}"
+          class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <span id="emailError" class="error-message"></span>
+      </div>
 
-        <label for="password" class="block mb-2 font-medium text-gray-700">Password</label>
+      <div>
+        <label for="password" class="block text-gray-700 text-sm mb-2">Password</label>
         <input type="password" name="password" id="password" required placeholder="Enter your password"
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6" />
+          class="w-full px-3 py-2 sm:px-4 sm:py-2.5 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <span id="passwordError" class="error-message"></span>
+      </div>
 
+
+      <div>
         <button type="submit"
-            class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition duration-200">Register</button>
+          class="w-full bg-indigo-600 text-white font-medium py-2.5 rounded-lg text-sm sm:text-base hover:bg-indigo-700 transition-colors duration-300">
+          Register
+        </button>
+      </div>
+      <p class="text-center text-gray-600 text-sm sm:text-base">
+        Already have an account?
+        <a href="{{ url_for('auth.login') }}" class="text-indigo-600 hover:underline font-medium">Login</a>
+      </p>
 
-        <div class="mt-4 text-center">
-            <span class="text-gray-600">Already have an account?</span>
-            <a href="{{ url_for('auth.login') }}" class="text-indigo-600 hover:underline">Login</a>
-        </div>
-    </form>
-    <script src="{{url_for('auth.static',filename='auth/reg-auth.js')}}">
+  </form>
 
-        
-    </script>
+  <script>
+    function validate(e) {
+      // Clear previous errors
+      document.getElementById('usernameError').textContent = '';
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('passwordError').textContent = '';
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const username = document.getElementById('username').value.trim();
+      let isValid = true; // Flag to track overall validity
+
+      // Regex that is a bit more general for email
+      const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|edu|gov|info|io|co|in|us|uk)$/i;
+
+
+      const usernamePattern = /^[a-zA-Z]+$/;
+
+      if (username === '') {
+        document.getElementById('usernameError').textContent = 'Username cannot be empty.';
+        isValid = false;
+      } else if (!usernamePattern.test(username)) {
+        // New validation rule: check if it contains only letters
+        document.getElementById('usernameError').textContent = 'Username must contain only letters.';
+        isValid = false;
+      }
+
+      if (!emailPattern.test(email)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email address.';
+        isValid = false;
+      }
+
+      if (password.length < 6) {
+        document.getElementById('passwordError').textContent = 'Password must be at least 6 characters long.';
+        isValid = false;
+      }
+
+      if (!isValid) {
+        // Prevent the form from submitting to the backend
+        e.preventDefault();
+      }
+
+      // Return true (submit) or false (prevent submission) to the onsubmit handler
+      return isValid;
+    }
+
+  </script>
+
+</body>
 
 </html>

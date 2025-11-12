@@ -1,0 +1,555 @@
+{% extends "layout.html" %} 
+
+{% block content %}
+
+<div class="container mx-auto px-0 py-0 max-w-7xl">
+  
+  {# 1. Top Section: Place Name over Image Gallery #}
+  {% set imgs_list = place_images if place_images and place_images|length>0 else [place.image_url] %}
+  <div class="w-full relative overflow-hidden mb-12">
+    
+    {# Image Gallery Container #}
+    <div class="flex overflow-x-auto snap-x snap-mandatory space-x-0 scroll-smooth no-scrollbar relative"
+         style="height: 600px;" aria-label="Photo Gallery of {{ place.name }}">
+      {% for img in imgs_list %}
+        {% set src = img %}
+        {% if not src %}
+          {% set src = '/static/images/placeholder.jpg' %}
+        {% elif src.startswith('http://') or src.startswith('https://') %}
+          {# External URL: use as is #}
+        {% elif src.startswith('/app') %}
+          {% set src = src.replace('/app','') %}
+        {% elif src.startswith('/') %}
+          {% set src = '/static/images' + src %}
+        {% else %}
+          {% set src = src.replace('/app', '') %}
+        {% endif %}
+        
+        <div class="flex-shrink-0 w-full snap-center overflow-hidden">
+          <img
+            src="/{{ src[4:] }}"
+            alt="{{ place.name }} - Image {{ loop.index }}"
+            loading="lazy"
+            class="w-full h-full object-cover"
+          />
+        </div>
+      {% endfor %}
+    </div>
+
+    {# 1A. Place Name (On Top of Image) #}
+    <div class="absolute top-0 left-0 right-0 p-8 pt-10 text-center z-20 pointer-events-none">
+      <h1 class="text-6xl font-extrabold text-white leading-tight drop-shadow-lg pointer-events-auto">
+        {{ place.name }}
+      </h1>
+      <p class="text-xl text-white mt-2 drop-shadow-md font-medium pointer-events-auto">
+        {{ place.location or 'A Beautiful Destination' }}
+      </p>
+    </div>
+
+    {# 1B. Weather Box (Over Image with Glass Background) #}
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+      <div id="weatherBox" class="p-5 rounded-2xl border border-white/30 backdrop-blur-md 
+                                   bg-black/20 text-white shadow-2xl transition-all duration-500 min-w-[300px] text-center">
+        <div class="flex items-center justify-center space-x-3 text-xl font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.973 4 4 0 00-7.75-1.353A4 4 0 003 15z" />
+          </svg>
+          <span>Loading Current Weather...</span>
+        </div>
+      </div>
+    </div>
+    
+    {# Navigation Dots for Scrollable Gallery #}
+    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2 p-2 z-10">
+      {% for img in imgs_list %}
+      <span class="dot w-3 h-3 bg-white/50 rounded-full cursor-pointer hover:bg-white transition-colors duration-200" data-slide-to="{{ loop.index0 }}"></span>
+      {% endfor %}
+    </div>
+
+  </div>
+  
+  {# 2. Main Content Section (Below Image) #}
+  <div class="px-4 py-8 md:px-8">
+    <div class="grid grid-cols-1  gap-8 lg:gap-12">
+      <div class="md:col-span-2">
+
+        {# Action Buttons and Location (Below Image) #}
+        <div class="flex flex-col sm:flex-row justify-start items-start sm:items-center mb-10 gap-4">
+          <div class="flex space-x-4">
+            <button
+              id="view-reviews-btn"
+              class="px-6 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg hover:bg-indigo-700 transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              Show Reviews
+            </button>
+            <button
+              id="view-map-btn"
+              class="px-6 py-3 bg-green-600 text-white rounded-full font-bold shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:-translate-y-0.5"
+              title="View location on map"
+            >
+              View Map
+            </button>
+          </div>
+        </div>
+        
+        {# Description #}
+        <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">About This Place</h2>
+        <div id="place-description" class="text-lg text-gray-700 leading-relaxed mb-10">
+          {{ place.description }}
+        </div>
+
+        {# Reviews Container #}
+        <div id="reviews-container" class="mt-12 hidden">
+          <div class="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-200 pb-3">
+              User Reviews (<span id="total-reviews">0</span>)
+            </h2>
+            <div id="reviews-list" class="space-y-6"></div>
+          </div>
+        </div>
+      </div>
+
+      {# Add Review Column - Sticky card #}
+      <div class="mt-6 md:mt-0"> <div class="sticky top-4 bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg border border-gray-100"> <div class="flex items-center justify-between mb-4 border-b border-gray-200 pb-3"> <h3 class="text-xl font-bold text-gray-800">Add Your Review</h3> <div class="text-sm text-gray-500" id="current-user-name"> Reviewing as: <span class="font-semibold text-gray-700">{{ current_user.username if current_user and current_user.is_authenticated else 'Guest' }}</span>
+            </div>
+        </div>
+        
+        <div class="mb-4"> <label class="block text-base font-medium text-gray-700 mb-1">Rating</label> <select id="rating" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-sm"> <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+              <option value="4">⭐⭐⭐⭐ Very Good</option>
+              <option value="3">⭐⭐⭐ Good</option>
+              <option value="2">⭐⭐ Fair</option>
+              <option value="1">⭐ Poor</option>
+            </select>
+        </div>
+        
+        <div class="mb-4"> <label class="block text-base font-medium text-gray-700 mb-1">Comment</label> <textarea
+              id="comment"
+              rows="5" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 shadow-sm" placeholder="Share your experience..."
+              required
+            ></textarea>
+        </div>
+        
+        <div class="text-right">
+            <button
+              id="submit-review-btn"
+              class="w-full px-6 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all duration-300 shadow-md transform hover:-translate-y-0.5 text-lg" >
+              Submit Review
+            </button>
+        </div>
+        <p id="review-message" class="mt-3 text-sm text-center font-medium"></p> </div>
+</div>
+    </div>
+  </div>
+</div>
+
+{# Data holder and Modals remain hidden #}
+<div
+  id="place-data"
+  style="display: none"
+  data-place-id="{{ place.id if place and place.id is not none else (place.place_id if place and place.place_id is not none else '') }}"
+  data-current-user="{{ current_user.id if current_user and current_user.is_authenticated else '' }}"
+  data-lat="{{ place.latitude if place and place.latitude is not none else (place.lat if place and place.lat is not none else '') }}"
+  data-lng="{{ place.longitude if place and place.longitude is not none else (place.lng if place and place.lng is not none else '') }}"
+></div>
+
+<script id="place-images-json" type="application/json">
+  {{ place_images | tojson | safe }}
+</script>
+
+<div
+  id="map-modal"
+  class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
+    id="map-modal-overlay"
+  ></div>
+  <div class="relative w-full max-w-4xl mx-auto rounded-xl">
+    <div class="bg-white rounded-3xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="font-bold text-2xl text-gray-800">Location Map</h3>
+        <button
+          id="map-close-btn"
+          class="text-gray-500 hover:text-gray-900 transition-colors duration-200 text-3xl leading-none"
+        >
+          ×
+        </button>
+      </div>
+      <div class="p-0">
+        <iframe
+          id="map-iframe"
+          class="w-full h-96 lg:h-[60vh] border-0"
+          frameborder="0"
+          loading="lazy"
+        ></iframe>
+        </div>
+      <div class="px-6 py-5 flex items-center justify-between gap-4 bg-gray-50 border-t border-gray-200">
+        <div>
+          <button
+            id="get-directions-btn"
+            class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-200 shadow-md"
+          >
+            Get Directions
+          </button>
+        </div>
+        <div class="text-right">
+          <button
+            id="map-close-btn-2"
+            class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition-colors duration-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const dataEl = document.getElementById("place-data");
+    let placeId = dataEl ? dataEl.dataset.placeId : "";
+    if (!placeId) {
+      const m = window.location.pathname.match(/\/places\/(\d+)/);
+      placeId = m ? m[1] : "";
+    }
+    const currentUserId = dataEl
+      ? dataEl.dataset.currentUser
+        ? parseInt(dataEl.dataset.currentUser, 10)
+        : null
+      : null;
+
+    // Helper function to normalize image URLs (needed for original template logic)
+    function normalizeImageUrl(url) {
+      return url.replace("/app", "");
+    }
+
+    // Image gallery navigation dots and scrolling
+    const gallery = document.querySelector('.flex.overflow-x-auto');
+    const dots = document.querySelectorAll('.dot');
+
+    if (gallery && dots.length > 0) {
+        // Function to update dots based on scroll position
+        const updateDots = () => {
+            if (gallery.scrollWidth === gallery.offsetWidth) return; // Prevent division by zero if scroll isn't needed
+            let scrollFraction = gallery.scrollLeft / (gallery.scrollWidth - gallery.offsetWidth);
+            let activeDotIndex = Math.round(scrollFraction * (dots.length - 1));
+
+            dots.forEach((dot, index) => {
+                if (index === activeDotIndex) {
+                    dot.classList.add('bg-white', 'w-4'); 
+                    dot.classList.remove('bg-white/50', 'w-3');
+                } else {
+                    dot.classList.add('bg-white/50', 'w-3');
+                    dot.classList.remove('bg-white', 'w-4');
+                }
+            });
+        };
+
+        gallery.addEventListener('scroll', updateDots);
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                gallery.scrollTo({
+                    left: gallery.offsetWidth * index,
+                    behavior: 'smooth'
+                });
+            });
+        });
+        // Set initial active dot
+        updateDots();
+    }
+
+    // --- Weather Logic ---
+    const weatherBox = document.getElementById("weatherBox");
+    const weatherIconMap = {
+        'clear sky': '☀️', 'few clouds': '🌤️', 'scattered clouds': '☁️',
+        'broken clouds': '☁️', 'shower rain': '🌧️', 'rain': '🌧️',
+        'thunderstorm': '⛈️', 'snow': '❄️', 'mist': '🌫️', 'fog': '🌫️',
+        'overcast clouds': '☁️', 'light rain': '🌦️', 'moderate rain': '🌧️',
+        'heavy intensity rain': '☔', 'drizzle': '☔', 'haze': '🌫️',
+        'sleet': '🌨️', 'freezing rain': '🌨️', 'light snow': '🌨️',
+        'heavy snow': '⛄', 'wind': '🌬️',
+        'default': '🌡️'
+    };
+
+    function getWeatherIcon(description) {
+        if (!description) return weatherIconMap.default;
+        const lowerDesc = description.toLowerCase();
+        for (const [key, icon] of Object.entries(weatherIconMap)) {
+            if (lowerDesc.includes(key)) {
+                return icon;
+            }
+        }
+        return weatherIconMap.default;
+    }
+
+    if (placeId && weatherBox) {
+      fetch("/api/weather/" + placeId)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && !data.error) {
+            const temp =
+              data.temperature !== undefined
+                ? Number(data.temperature).toFixed(1) + " °C"
+                : "N/A";
+            const cond = data.description || data.weather || "";
+            const humidity =
+              data.humidity !== undefined ? data.humidity + "%" : "N/A";
+            const wind =
+              data.wind_speed !== undefined ? Number(data.wind_speed).toFixed(1) + " m/s" : "N/A";
+            
+            const icon = getWeatherIcon(cond);
+
+            // Updated aesthetic weather display
+            weatherBox.innerHTML = `
+                <div class="flex items-center justify-between text-2xl font-bold">
+                    <span>${icon} ${temp}</span>
+                    <span class="text-xl font-medium">${cond}</span>
+                </div>
+                <div class="flex justify-between text-md mt-2">
+                    <span>Humidity: <span class="font-semibold">${humidity}</span></span>
+                    <span>Wind: <span class="font-semibold">${wind}</span></span>
+                </div>
+            `;
+          } else {
+            weatherBox.innerHTML = `
+                <div class="flex items-center justify-center space-x-3 text-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Weather N/A.</span>
+                </div>`;
+          }
+        })
+        .catch(() => (weatherBox.innerHTML = `
+            <div class="flex items-center justify-center space-x-3 text-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Weather N/A.</span>
+            </div>`));
+    }
+
+    // --- Reviews Logic (Unchanged for functionality) ---
+    const viewBtn = document.getElementById("view-reviews-btn");
+    const container = document.getElementById("reviews-container");
+    const reviewsList = document.getElementById("reviews-list");
+    const totalSpan = document.getElementById("total-reviews");
+
+    function formatDateToMDY(isoOrTimestamp) {
+      try {
+        const d = new Date(isoOrTimestamp);
+        if (isNaN(d.getTime())) return "";
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const y = d.getFullYear();
+        return `${m}/${day}/${y}`;
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function renderReviews(data) {
+      totalSpan.textContent = data.total_reviews || 0;
+      reviewsList.innerHTML = "";
+      const reviews = data.reviews || [];
+      if (!reviews.length) {
+        reviewsList.innerHTML =
+          '<p class="text-gray-500 italic text-center p-4">No reviews yet. Be the first to share your experience!</p>';
+        return;
+      }
+      reviews.forEach((r) => {
+        const div = document.createElement("div");
+        div.className = "review-card p-5 border border-gray-200 rounded-2xl bg-gray-50 hover:bg-white transition duration-300 shadow-sm";
+
+        const username = r.username || "Anonymous User";
+        const dateStr = r.created_at ? formatDateToMDY(r.created_at) : "";
+        const stars =
+          "★".repeat(Math.max(0, Math.min(5, Number(r.rating) || 0))) +
+          "☆".repeat(5 - Math.max(0, Math.min(5, Number(r.rating) || 0)));
+
+        div.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <div class="font-bold text-lg text-gray-900">${username}</div>
+            <div class="text-sm text-gray-500">${dateStr}</div>
+          </div>
+          <div class="text-yellow-500 text-xl mb-3">${stars}</div>
+          <p class="text-gray-700 leading-relaxed">${(r.comment || "").replace(
+            /\n/g,
+            "<br/>"
+          )}</p>
+        `;
+
+        reviewsList.appendChild(div);
+      });
+    }
+    
+    function fetchReviews() {
+      if (!placeId) return;
+      fetch("/api/reviews/" + placeId)
+        .then((r) => {
+          if (!r.ok) throw new Error("Network");
+          return r.json();
+        })
+        .then(renderReviews)
+        .catch((e) => {
+          reviewsList.innerHTML =
+            '<p class="text-red-500 text-center p-4">Unable to load reviews.</p>';
+        });
+    }
+    viewBtn &&
+      viewBtn.addEventListener("click", () => {
+        if (container.classList.contains("hidden")) {
+          container.classList.remove("hidden");
+          fetchReviews();
+          viewBtn.textContent = "Hide Reviews";
+        } else {
+          container.classList.add("hidden");
+          viewBtn.textContent = "Show Reviews";
+        }
+      });
+
+    // --- Submit Review Logic (Unchanged for functionality) ---
+    const submitBtn = document.getElementById("submit-review-btn");
+    const reviewMessage = document.getElementById("review-message");
+    const commentEl = document.getElementById("comment");
+
+    // clear error state when user types
+    if (commentEl) {
+      commentEl.addEventListener("input", () => {
+        reviewMessage.textContent = "";
+        reviewMessage.classList.remove("text-red-600", "text-green-600");
+        commentEl.classList.remove("border-red-500");
+      });
+    }
+
+    submitBtn &&
+      submitBtn.addEventListener("click", () => {
+        if (!currentUserId) {
+          alert("Please log in to submit a review.");
+          return;
+        }
+        const rating = parseInt(document.getElementById("rating").value);
+        const rawComment = commentEl ? commentEl.value : "";
+        const comment = rawComment.trim();
+
+        // Validation: stop submission if comment is empty or only spaces
+        if (!comment) {
+          reviewMessage.textContent =
+            "Please share your thoughts — the comment can't be empty!";
+          reviewMessage.classList.remove("text-green-600");
+          reviewMessage.classList.add("text-red-600");
+          if (commentEl) {
+            commentEl.classList.add("border-red-500");
+            commentEl.focus();
+          }
+          return;
+        }
+
+        fetch("/api/reviews/" + placeId, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating: rating, comment: comment }),
+        })
+          .then((res) => {
+            if (res.status === 401) throw new Error("unauthenticated");
+            return res.json();
+          })
+          .then((data) => {
+            reviewMessage.textContent = data.message || "Review submitted successfully!";
+            reviewMessage.classList.remove("text-red-600");
+            reviewMessage.classList.add("text-green-600");
+            if (commentEl) {
+              commentEl.value = "";
+              commentEl.classList.remove("border-red-500");
+            }
+            container.classList.remove("hidden");
+            viewBtn.textContent = "Hide Reviews";
+            fetchReviews();
+          })
+          .catch((err) => {
+            if (err.message === "unauthenticated") {
+              alert("You must be logged in to submit a review.");
+            } else {
+              reviewMessage.textContent = "Failed to submit review. Please try again.";
+              reviewMessage.classList.remove("text-green-600");
+              reviewMessage.classList.add("text-red-600");
+            }
+          });
+      });
+
+    // --- Map Modal Logic (Unchanged for functionality) ---
+    const viewMapBtn = document.getElementById("view-map-btn");
+    const mapModal = document.getElementById("map-modal");
+    const mapOverlay = document.getElementById("map-modal-overlay");
+    const mapClose = document.getElementById("map-close-btn");
+    const mapClose2 = document.getElementById("map-close-btn-2");
+    const getDirectionsBtn = document.getElementById("get-directions-btn");
+    const mapIframe = document.getElementById("map-iframe");
+    const placeLat = dataEl ? dataEl.dataset.lat || "" : "";
+    const placeLng = dataEl ? dataEl.dataset.lng || "" : "";
+
+    function openMap() {
+      if (!placeLat || !placeLng) {
+        alert("Location coordinates are not available for this place.");
+        return;
+      }
+      const src = `https://maps.google.com/maps?q=${encodeURIComponent(
+        placeLat + "," + placeLng
+      )}&z=15&output=embed`;
+      if (mapIframe) mapIframe.src = src;
+      mapModal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeMap() {
+      mapModal.classList.add("hidden");
+      if (mapIframe) mapIframe.src = "";
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    if (viewMapBtn) viewMapBtn.addEventListener("click", openMap);
+    if (mapOverlay) mapOverlay.addEventListener("click", closeMap);
+    if (mapClose) mapClose.addEventListener("click", closeMap);
+    if (mapClose2) mapClose2.addEventListener("click", closeMap);
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "Escape" &&
+        mapModal &&
+        !mapModal.classList.contains("hidden")
+      )
+        closeMap();
+    });
+
+    // Get directions button opens Google Maps directions in a new tab
+    if (getDirectionsBtn) {
+      getDirectionsBtn.addEventListener("click", function () {
+        if (!placeLat || !placeLng) return alert("Location not available.");
+        const dest = encodeURIComponent(placeLat + "," + placeLng);
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+        window.open(url, "_blank", "noopener");
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Custom scrollbar for aesthetic purposes */
+  .no-scrollbar::-webkit-scrollbar {
+      display: none;
+  }
+  .no-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Drop shadow for text over image */
+  .drop-shadow-lg {
+    text-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+  }
+  .drop-shadow-md {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+</style>
+{% endblock %}

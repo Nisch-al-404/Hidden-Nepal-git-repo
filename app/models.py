@@ -6,9 +6,9 @@ def get_db():
     print("Connecting to the database...")
     return mysql.connector.connect(
         host="localhost",
-        user="root",               # Default XAMPP user
-        password="rOoT@12#3",               # Default: empty (no password)
-        database="Project2"    # Your database name in phpMyAdmin
+        user="root",  # Default MySQL user
+        password="root1234",  # MySQL user password
+        database="Project2"  # Your MySQL database name
     )
 
 
