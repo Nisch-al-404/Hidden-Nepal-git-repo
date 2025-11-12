@@ -1,8 +1,9 @@
 {% extends "contributor/contributor_layout.html" %}
 {% block content %}
-<section class="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-10 px-4 flex justify-center items-start">
+<section
+  class="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-10 px-4 flex justify-center items-start">
   <div class="w-full max-w-4xl bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl p-8 sm:p-10 border border-gray-100">
-    
+
     <!-- Heading -->
     <div class="text-center mb-8">
       <h2 class="text-3xl font-extrabold text-green-700 tracking-tight mb-2">
@@ -16,32 +17,187 @@
 
     <!-- Form -->
     <form method="POST" enctype="multipart/form-data" class="space-y-6">
-      
+
       <!-- Place Name -->
       <div>
         <label class="block text-gray-700 font-medium mb-1">Place Name</label>
         <input type="text" name="name" value="{{ place.name }}" required
-               class="w-full px-4 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+          class="w-full px-4 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
       </div>
 
       <!-- Description -->
       <div>
         <label class="block text-gray-700 font-medium mb-1">Description</label>
         <textarea name="description" required rows="4"
-                  class="w-full px-4 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">{{ place.description }}</textarea>
+          class="w-full px-4 py-2 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">{{ place.description }}</textarea>
       </div>
+
+      <!-- Categories (multiple select chips) -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Categories</label>
+        <p class="text-sm text-gray-500 mb-3">Select one or more categories relevant to this place.</p>
+
+        <style>
+          .cat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            background: #ffffff;
+            color: #374151;
+            cursor: pointer;
+            transition: all 150ms ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            user-select: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+          }
+
+          .cat-chip .emoji {
+            font-size: 1.15rem;
+            line-height: 1;
+          }
+
+          input.cat-checkbox {
+            position: absolute;
+            left: -9999px;
+          }
+
+          /* visually hide native checkbox */
+
+          /* checked state */
+          input.cat-checkbox:checked+.cat-chip {
+            background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+            color: #fff;
+            border-color: transparent;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.12);
+          }
+
+          /* hover/focus affordance */
+          .cat-chip:hover {
+            transform: translateY(-2px);
+          }
+
+          input.cat-checkbox:focus+.cat-chip {
+            outline: 3px solid rgba(99, 102, 241, 0.18);
+            outline-offset: 3px;
+          }
+        </style>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Mountains & Peaks" class="cat-checkbox" {%
+              if 'Mountains & Peaks' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🏔️</span><span>Mountains & Peaks</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Lakes & Rivers" class="cat-checkbox" {%
+              if 'Lakes & Rivers' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🌊</span><span>Lakes & Rivers</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="National Parks & Wildlife" class="cat-checkbox" {%
+              if 'National Parks & Wildlife' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🦌</span><span>National Parks & Wildlife</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Waterfalls & Caves" class="cat-checkbox" {%
+              if 'Waterfalls & Caves' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">💧</span><span>Waterfalls & Caves</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Hills & Valleys" class="cat-checkbox" {%
+              if 'Hills & Valleys' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🌄</span><span>Hills & Valleys</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Cultural & Historical Heritage" class="cat-checkbox" {%
+              if 'Cultural & Historical Heritage' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🏛️</span><span>Cultural & Historical Heritage</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Spiritual & Religious Sites" class="cat-checkbox" {%
+              if 'Spiritual & Religious Sites' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🛕</span><span>Spiritual & Religious Sites</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Adventure & Trekking" class="cat-checkbox" {%
+              if 'Adventure & Trekking' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🧗</span><span>Adventure & Trekking</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Scenic Spots & Hill Stations" class="cat-checkbox" {%
+              if 'Scenic Spots & Hill Stations' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🌅</span><span>Scenic Spots & Hill Stations</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Food & Cuisine" class="cat-checkbox" {%
+              if 'Food & Cuisine' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🍲</span><span>Food & Cuisine</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Accommodation & Tourism Services" class="cat-checkbox" {%
+              if 'Accommodation & Tourism Services' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🛏️</span><span>Accommodation & Tourism</span>
+            </div>
+          </label>
+
+          <label class="relative">
+            <input type="checkbox" name="categories[]" value="Cities & Nightlife" class="cat-checkbox" {%
+              if 'Cities & Nightlife' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+            <div class="cat-chip">
+              <span class="emoji">🏙️</span><span>Cities & Nightlife</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
 
       <!-- Coordinates -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="block text-gray-700 font-medium mb-1">Latitude</label>
           <input type="text" id="latitude" name="latitude" value="{{ place.latitude }}" required
-                 class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+            class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
         </div>
         <div>
           <label class="block text-gray-700 font-medium mb-1">Longitude</label>
           <input type="text" id="longitude" name="longitude" value="{{ place.longitude }}" required
-                 class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+            class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
         </div>
       </div>
 
@@ -56,14 +212,14 @@
         <label class="block text-gray-700 font-medium mb-2">Current Images</label>
         <div class="flex flex-wrap gap-4">
           {% if images %}
-            {% for img in images %}
-              <div class="rounded-xl shadow-md w-40 h-28 overflow-hidden border border-gray-200">
-                <img src="/{{ img.image_url| replace('app/', '') }}" alt="Place Image {{ img.image_id }}"
-                     class="w-full h-full object-cover">
-              </div>
-            {% endfor %}
+          {% for img in images %}
+          <div class="rounded-xl shadow-md w-40 h-28 overflow-hidden border border-gray-200">
+            <img src="/{{ img.image_url| replace('app/', '') }}" alt="Place Image {{ img.image_id }}"
+              class="w-full h-full object-cover">
+          </div>
+          {% endfor %}
           {% else %}
-            <p class="text-gray-500">No images uploaded.</p>
+          <p class="text-gray-500">No images uploaded.</p>
           {% endif %}
         </div>
       </div>
@@ -72,14 +228,14 @@
       <div>
         <label class="block text-gray-700 font-medium mb-2">Upload New Image (optional)</label>
         <input type="file" name="images" multiple accept="image/*"
-               class="w-full px-3 py-2 border rounded-xl bg-gray-50 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
+          class="w-full px-3 py-2 border rounded-xl bg-gray-50 shadow-sm focus:ring-2 focus:ring-green-400 focus:outline-none">
       </div>
 
       <!-- Submit Button -->
       <div class="text-center">
         <button type="submit"
-                class="px-8 py-3 bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-           Update Place
+          class="px-8 py-3 bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          Update Place
         </button>
       </div>
 
@@ -90,30 +246,28 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
-      const map = L.map('map').setView(
-          [parseFloat('{{ place.latitude|default(0) }}'), parseFloat('{{ place.longitude|default(0) }}')],
-          10
-      );
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
+    const map = L.map('map').setView(
+      [parseFloat('{{ place.latitude|default(0) }}'), parseFloat('{{ place.longitude|default(0) }}')],
+      10
+    );
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-      let marker = L.marker([
-          parseFloat('{{ place.latitude|default(0) }}'),
-          parseFloat('{{ place.longitude|default(0) }}')
-      ]).addTo(map);
+    let marker = L.marker([
+      parseFloat('{{ place.latitude|default(0) }}'),
+      parseFloat('{{ place.longitude|default(0) }}')
+    ]).addTo(map);
 
-      map.on('click', function(e) {
-          const lat = e.latlng.lat.toFixed(6);
-          const lng = e.latlng.lng.toFixed(6);
+    map.on('click', function (e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
 
-          document.getElementById('latitude').value = lat;
-          document.getElementById('longitude').value = lng;
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
 
-          marker.setLatLng(e.latlng);
-      });
+      marker.setLatLng(e.latlng);
+    });
   </script>
 </section>
 {% endblock %}
-
-

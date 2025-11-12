@@ -1,16 +1,16 @@
 {
     "site_name": "Hidden Nepal",
-    "logo": "images/20251011_062129.jpg",
-    "favicon": "images/favicon.ico",
-    "homepage_banner_text": "Welcome to Hidden Nepal \u2013 Discover the unseen beauty of Nepal.",
+    "logo": "images/1.png",
+    "favicon": "images/1.png",
+    "homepage_banner_text": null,
     "homepage_banner_image": "uploads/default_banner.jpg",
-    "contact_email": "contact@hiddennepal.com",
-    "contact_phone": "+977-9800000000",
-    "contact_address": "Kathmandu, Nepal",
+    "contact_email": null,
+    "contact_phone": null,
+    "contact_address": null,
     "footer_text": null,
-    "social_fb": "https://facebook.com/hiddennepal",
-    "social_ig": "https://instagram.com/hiddennepal",
-    "social_yt": "https://youtube.com/@hiddennepal",
+    "social_fb": null,
+    "social_ig": null,
+    "social_yt": null,
     "maintenance_mode": false,
-    "maintenance_message": "We'll be back soon."
+    "maintenance_message": null
 }

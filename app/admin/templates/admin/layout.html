@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>{% block title %}Admin Panel{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/{{settings.favicon}}" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -28,8 +29,10 @@
     <nav class="fixed w-full bg-white border-b border-gray-200 px-4 py-3 flex flex-col z-40">
         <div class="flex items-center justify-between">
             <div class="flex items-center">
-                <img src="/static/{{settings.logo}}" alt="Admin Logo" class="h-10 mr-3">
-                <span class="text-xl font-bold text-gray-800">Admin Panel</span>
+                <a href="/" class="inline-block w-10 h-10 rounded-full overflow-hidden border border-gray-200 scale-150">
+                    <img src="/static/{{settings.logo}}" alt="Admin Logo" class="w-full h-full object-cover">
+                </a>
+                <span class=" px-5 text-xl font-bold text-gray-800">Admin Panel</span>
             </div>
             
             <div class="md:hidden">
@@ -180,7 +183,7 @@
                 <!-- ... mobile sidebar links ... (keep as is) -->
                 <a href="{{url_for('admin.admin_panel')}}" class="group">
                     <div
-                        class="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#eaedf1] group-hover:bg-blue-100 group-active:bg-blue-200 transition">
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='dashboard' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition">
                         <div class="text-[#101518]" data-icon="House" data-size="24px" data-weight="fill">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -194,7 +197,7 @@
                 </a>
                 <a href="{{url_for('admin.manage_places')}}" class="group">
                     <div
-                        class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full {{ 'bg-[#eaedf1]' if active_page=='manage_places' else '' }}">
                         <div class="text-[#101518]" data-icon="MapPin" data-size="24px" data-weight="regular">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -208,7 +211,7 @@
                     </div>
                 </a>
                 <a href="{{url_for('admin.manage_users')}}" class="group">
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
+                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full {{ 'bg-[#eaedf1]' if active_page=='manage_users' else '' }}">
                         <div class="text-[#101518]" data-icon="Users" data-size="24px" data-weight="regular">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -223,7 +226,7 @@
                 
         
                 <a href="{{url_for('admin.settings')}}" class="group">
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
+                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full {{ 'bg-[#eaedf1]' if active_page=='settings' else '' }}">
                         <div class="text-[#101518]" data-icon="Gear" data-size="24px" data-weight="regular">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">

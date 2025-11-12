@@ -55,6 +55,157 @@
         </div>
       </div>
     </div>
+      <!-- Categories (multiple select chips) -->
+  <div class="bg-white shadow rounded-xl p-6">
+    <label class="block text-gray-700 font-semibold mb-1">Categories</label>
+    <p class="text-sm text-gray-500 mb-3">Select one or more categories relevant to this place.</p>
+
+    <style>
+      .cat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 9999px;
+        background: #ffffff;
+        color: #374151;
+        cursor: pointer;
+        transition: all 150ms ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        user-select: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .cat-chip .emoji {
+        font-size: 1.15rem;
+        line-height: 1;
+      }
+
+      input.cat-checkbox {
+        position: absolute;
+        left: -9999px;
+      }
+
+      /* checked state */
+      input.cat-checkbox:checked+.cat-chip {
+        background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+        color: #fff;
+        border-color: transparent;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.12);
+      }
+
+      /* hover/focus affordance */
+      .cat-chip:hover {
+        transform: translateY(-2px);
+      }
+
+      input.cat-checkbox:focus+.cat-chip {
+        outline: 3px solid rgba(99, 102, 241, 0.18);
+        outline-offset: 3px;
+      }
+    </style>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Mountains & Peaks" class="cat-checkbox"  {%
+              if 'Mountains & Peaks' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🏔️</span><span>Mountains & Peaks</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Lakes & Rivers" class="cat-checkbox"  {% if 'Lakes & Rivers' in
+          current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🌊</span><span>Lakes & Rivers</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="National Parks & Wildlife" class="cat-checkbox"  {%
+          if 'National Parks & Wildlife' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🦌</span><span>National Parks & Wildlife</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Waterfalls & Caves" class="cat-checkbox" {%
+          if 'Waterfalls & Caves' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">💧</span><span>Waterfalls & Caves</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Hills & Valleys" class="cat-checkbox" {% if 'Hills & Valleys'
+          in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🌄</span><span>Hills & Valleys</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Cultural & Historical Heritage" class="cat-checkbox" {%
+          if 'Cultural & Historical Heritage' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🏛️</span><span>Cultural & Historical Heritage</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Spiritual & Religious Sites" class="cat-checkbox" {%
+          if 'Spiritual & Religious Sites' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🛕</span><span>Spiritual & Religious Sites</span>
+        </div>
+      </label>
+
+      <label class="relative">
+      <input type="checkbox" name="categories[]" value="Adventure & Trekking" class="cat-checkbox"  {%
+        if 'Adventure & Trekking' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+      <div class="cat-chip">
+        <span class="emoji">🧗</span><span>Adventure & Trekking</span>
+      </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Scenic Spots & Hill Stations" class="cat-checkbox" {%
+          if 'Scenic Spots & Hill Stations' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🌅</span><span>Scenic Spots & Hill Stations</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Food & Cuisine" class="cat-checkbox" {% if 'Food & Cuisine' in
+          current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🍲</span><span>Food & Cuisine</span>
+        </div>
+      </label>
+
+      <label class="relative">
+        <input type="checkbox" name="categories[]" value="Accommodation & Tourism Services" class="cat-checkbox" {%
+          if 'Accommodation & Tourism Services' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+        <div class="cat-chip">
+          <span class="emoji">🛏️</span><span>Accommodation & Tourism</span>
+        </div>
+      </label>
+
+      <label class="relative">
+      <input type="checkbox" name="categories[]" value="Cities & Nightlife" class="cat-checkbox" {%
+        if 'Cities & Nightlife' in current_categories|map(attribute='name' ) %}checked{% endif %} />
+      <div class="cat-chip">
+        <span class="emoji">🏙️</span><span>Cities & Nightlife</span>
+      </div>
+      </label>
+    </div>
+  </div>
 
     <!-- Contributor Info -->
     {% if place.contributor_id %}

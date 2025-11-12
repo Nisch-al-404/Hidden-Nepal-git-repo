@@ -12,6 +12,7 @@ from app.models import get_db, Place, User
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
+from flask import after_this_request
 
 # contributor_bp = Blueprint('contributor', __name__, template_folder='templates')#
 
@@ -51,7 +52,65 @@ def add_place():
         latitude = request.form.get('latitude')
         longitude = request.form.get('longitude')
         contributor_id = current_user.id
-        images = request.files.getlist('images')  # <-- multiple images
+        images = request.files.getlist('images')# <-- multiple images
+
+        # collect selected categories (works with name="categories[]" or name="categories")
+        selected_categories = request.form.getlist('categories[]') or request.form.getlist('categories')
+        selected_categories = [c.strip() for c in selected_categories if c and c.strip()]
+
+        # if categories were selected, register a post-response hook to persist them
+        if selected_categories:
+
+            @after_this_request
+            def _save_categories(response):
+                try:
+                    conn2 = get_db()
+                    cur2 = conn2.cursor(dictionary=True)
+
+                    # find the place most recently created by this contributor in this request flow
+                    cur2.execute(
+                        "SELECT place_id FROM places WHERE submitted_by = %s ORDER BY created_at DESC LIMIT 1",
+                        (contributor_id,)
+                    )
+                    row = cur2.fetchone()
+                    if not row:
+                        cur2.close()
+                        conn2.close()
+                        return response
+
+                    place_id = row["place_id"]
+
+                    # fetch matching category_ids for the selected names
+                    placeholders = ",".join(["%s"] * len(selected_categories))
+                    cur2.execute(
+                        f"SELECT category_id, name FROM categories WHERE name IN ({placeholders})",
+                        tuple(selected_categories)
+                    )
+                    rows = cur2.fetchall()
+                    name_to_id = {r["name"]: r["category_id"] for r in rows}
+
+                    # prepare insert tuples for place_categories
+                    inserts = []
+                    for name in selected_categories:
+                        cid = name_to_id.get(name)
+                        if cid:
+                            inserts.append((place_id, cid))
+
+                    if inserts:
+                        # avoid duplicates with INSERT IGNORE (MySQL) or use INSERT ... ON DUPLICATE KEY if unavailable
+                        cur2.executemany(
+                            "INSERT IGNORE INTO place_categories (place_id, category_id) VALUES (%s, %s)",
+                            inserts
+                        )
+                        conn2.commit()
+
+                    cur2.close()
+                    conn2.close()
+                except Exception as e:
+                    # don't block the response on category saving errors; log for debugging
+                    print("Failed to save categories:", e)
+                return response
+
 
         if not contributor_id:
             flash("You must be logged in to submit a place.")
@@ -122,18 +181,57 @@ def edit_place(place_id):
     cursor.execute("SELECT * FROM place_images WHERE place_id = %s", (place_id,))
     images = cursor.fetchall()
 
+    # Fetch all available categories
+    cursor.execute("SELECT * FROM categories")
+    all_categories = cursor.fetchall()
+
+    # Fetch current categories for this place
+    cursor.execute("""
+        SELECT c.* 
+        FROM categories c
+        JOIN place_categories pc ON c.category_id = pc.category_id
+        WHERE pc.place_id = %s
+    """, (place_id,))
+    current_categories = cursor.fetchall()
+    print("current category",current_categories)
+
     if request.method == 'POST':
-        name = request.form['name']
+        place_name = request.form['name']
         description = request.form['description']
         latitude = request.form['latitude']
         longitude = request.form['longitude']
+        selected_categories = request.form.getlist('categories[]') or request.form.getlist('categories')
+        selected_categories = [c.strip() for c in selected_categories if c and c.strip()]
+
+        # ✅ Update categories
+        cursor.execute("DELETE FROM place_categories WHERE place_id = %s", (place_id,))
+        if selected_categories:
+            # Fetch category IDs for selected names
+            placeholders = ",".join(["%s"] * len(selected_categories))
+            cursor.execute(
+                f"SELECT category_id, name FROM categories WHERE name IN ({placeholders})",
+                tuple(selected_categories)
+            )
+            rows = cursor.fetchall()
+            name_to_id = {r["name"]: r["category_id"] for r in rows}
+            inserts = []
+            for name in selected_categories:
+                cid = name_to_id.get(name)
+                if cid:
+                    inserts.append((place_id, cid))
+            if inserts:
+                cursor.executemany(
+                    "INSERT IGNORE INTO place_categories (place_id, category_id) VALUES (%s, %s)",
+                    inserts
+                )
+
 
         # ✅ Update place details
         cursor.execute("""
             UPDATE places
             SET name=%s, description=%s, latitude=%s, longitude=%s
             WHERE place_id=%s
-        """, (name, description, latitude, longitude, place_id))
+        """, (place_name, description, latitude, longitude, place_id))
 
         try:
             # ✅ Handle new images
@@ -160,7 +258,7 @@ def edit_place(place_id):
         flash("Place updated successfully.")
         return redirect(url_for('contributor.my_contributions'))
 
-    return render_template('contributor/edit_place.html', place=place, images=images)
+    return render_template('contributor/edit_place.html', place=place, images=images,current_categories=current_categories, all_categories=all_categories)
 
 
 

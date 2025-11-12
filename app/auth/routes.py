@@ -80,7 +80,7 @@ def register():
 
             cursor.execute("""
                            INSERT INTO users  (username, email, password_hash, role, can_contribute)
-                           VALUES (%s, %s, %s, 'admin', TRUE)
+                           VALUES (%s, %s, %s, 'contributor', TRUE)
                            """, (username, email, hashed_password))
         
             """admin_nischal@gmail.com

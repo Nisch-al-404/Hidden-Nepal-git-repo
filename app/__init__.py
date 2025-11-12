@@ -1,5 +1,5 @@
 from flask import Flask, Blueprint, session
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from app.models import get_db, User
 import json
 
@@ -15,7 +15,12 @@ def create_app():
                 settings = json.load(f)
         except FileNotFoundError:
             settings = {}
-        return dict(settings=settings)
+
+        topuser=load_user(current_user.id if current_user.is_authenticated else None)
+        # print(current_user.name)
+       
+        
+        return dict(settings=settings,topuser=topuser)
 
     # Flask-Login Setup
     login_manager = LoginManager()

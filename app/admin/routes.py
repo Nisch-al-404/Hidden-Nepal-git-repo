@@ -47,26 +47,27 @@ def admin_panel():
         # print("Pending Contributor Requests:", result['pending_contributor_requests'])
         # print("Approved Places:", result['approved_places'])
 
-        # cursor.execute("SELECT YEAR(created_at) AS year, MONTH(created_at) AS month, COUNT(*) AS count FROM Places WHERE YEAR(created_at) = YEAR(CURDATE()) GROUP BY YEAR(created_at), MONTH(created_at)")
-        # monthly_data = cursor.fetchall()
-        monthly_data = [
+        cursor.execute("SELECT YEAR(created_at) AS year, MONTH(created_at) AS month, COUNT(*) AS count FROM Places WHERE YEAR(created_at) = YEAR(CURDATE()) GROUP BY YEAR(created_at), MONTH(created_at)")
+        monthly_data = cursor.fetchall()
+
+#         monthly_data = [
     
-    {'year': 2024, 'month': 10, 'count': 200},
-    {'year': 2024, 'month': 11, 'count': 175},
-    {'year': 2024, 'month': 12, 'count': 160},
-    {'year': 2025, 'month': 1, 'count': 130},
-    {'year': 2025, 'month': 2, 'count': 160},
-    {'year': 2025, 'month': 3, 'count': 190},
-    {'year': 2025, 'month': 4, 'count': 220},
-    {'year': 2025, 'month': 5, 'count': 200},
-    {'year': 2025, 'month': 6, 'count': 240},
-    {'year': 2025, 'month': 7, 'count': 260},
-    {'year': 2025, 'month': 8, 'count': 230},
-    {'year': 2025, 'month': 9, 'count': 250},
-    {'year': 2025, 'month': 10, 'count': 210},
-    {'year': 2025, 'month': 11, 'count': 185},
-    {'year': 2025, 'month': 12, 'count': 170},
-]
+#     {'year': 2024, 'month': 10, 'count': 200},
+#     {'year': 2024, 'month': 11, 'count': 175},
+#     {'year': 2024, 'month': 12, 'count': 160},
+#     {'year': 2025, 'month': 1, 'count': 130},
+#     {'year': 2025, 'month': 2, 'count': 160},
+#     {'year': 2025, 'month': 3, 'count': 190},
+#     {'year': 2025, 'month': 4, 'count': 220},
+#     {'year': 2025, 'month': 5, 'count': 200},
+#     {'year': 2025, 'month': 6, 'count': 240},
+#     {'year': 2025, 'month': 7, 'count': 260},
+#     {'year': 2025, 'month': 8, 'count': 230},
+#     {'year': 2025, 'month': 9, 'count': 250},
+#     {'year': 2025, 'month': 10, 'count': 210},
+#     {'year': 2025, 'month': 11, 'count': 185},
+#     {'year': 2025, 'month': 12, 'count': 170},
+# ]
        
         cursor.execute("SELECT aa.action_id AS action_id, p.place_id AS place_id, p.name AS place_name, u.user_id AS contributor_id, u.username AS contributor_name, a.user_id AS admin_id, a.username AS admin_name, aa.action AS action_status, aa.action_date AS action_date, aa.notes AS action_notes FROM Admin_Actions aa JOIN Places p ON p.place_id = aa.place_id JOIN Users u ON u.user_id = p.submitted_by JOIN Users a ON a.user_id = aa.admin_id ORDER BY aa.action_date DESC LIMIT 20;")
         recent_activities=cursor.fetchall()
@@ -162,6 +163,16 @@ def view_place(place_id):
             ORDER BY uploaded_at DESC
         """, (place_id,))
         images = cursor.fetchall()
+            # Fetch current categories for this place
+        cursor.execute("""
+        SELECT c.* 
+        FROM categories c
+        JOIN place_categories pc ON c.category_id = pc.category_id
+        WHERE pc.place_id = %s
+        """, (place_id,))
+        current_categories = cursor.fetchall()
+        print("current category",current_categories)
+    
 
         # 3. Reviews with reviewer info
         cursor.execute("""
@@ -191,6 +202,7 @@ def view_place(place_id):
         place=place,
         images=images,
         reviews=reviews,
+        current_categories=current_categories
     )
 
 @admin_bp.route('/manage_places/edit/<int:place_id>', methods=["GET", "POST"])
@@ -216,6 +228,31 @@ def edit_place(place_id):
                 request.form.get("status"),
                 place_id
             ))
+            selected_categories = request.form.getlist('categories[]') or request.form.getlist('categories')
+            selected_categories = [c.strip() for c in selected_categories if c and c.strip()]
+
+        # ✅ Update categories
+            cursor.execute("DELETE FROM place_categories WHERE place_id = %s", (place_id,))
+            if selected_categories:
+               # Fetch category IDs for selected names
+               placeholders = ",".join(["%s"] * len(selected_categories))
+               cursor.execute(
+                f"SELECT category_id, name FROM categories WHERE name IN ({placeholders})",
+                tuple(selected_categories)
+               )
+               rows = cursor.fetchall()
+               name_to_id = {r["name"]: r["category_id"] for r in rows}
+               inserts = []
+               for name in selected_categories:
+                   cid = name_to_id.get(name)
+                   if cid:
+                        inserts.append((place_id, cid))
+               if inserts:
+                   cursor.executemany(
+                       "INSERT IGNORE INTO place_categories (place_id, category_id) VALUES (%s, %s)",
+                      inserts
+                    )
+
 
             # --- Update Contributor ---
             contributor_id = request.form.get("contributor_id")
@@ -282,11 +319,22 @@ def edit_place(place_id):
     """, (place_id,))
     reviews = cursor.fetchall()
 
+                # Fetch current categories for this place
+    cursor.execute("""
+    SELECT c.* 
+    FROM categories c
+    JOIN place_categories pc ON c.category_id = pc.category_id
+    WHERE pc.place_id = %s
+    """, (place_id,))
+    current_categories = cursor.fetchall()
+    # print("current category",current_categories)
+
     cursor.close()
     conn.close()
 
     return render_template("admin/edit_place.html",
-                           place=place, images=images, reviews=reviews)
+                           place=place, images=images, reviews=reviews,current_categories=current_categories,
+                           active_page="manage_places")
 
 @admin_bp.route('/manage_places/delete_image/<int:image_id>/<int:place_id>', methods=['POST','GET'])
 @admin_required

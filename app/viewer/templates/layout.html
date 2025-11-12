@@ -1,44 +1,820 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Hidden Nepal{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Hidden Nepal{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/static/{{settings.favicon}}" type="image/x-icon">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    body,
+    html {
+      font-family: "Poppins", Arial, sans-serif;
+    }
+  </style>
+  <style>
+    /* Sidebar scrolling improvements */
+    #explore-sidebar {
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      /* smooth scrolling on iOS */
+      scroll-behavior: smooth;
+    }
+
+    /* Mobile categories panel should also scroll independently */
+    #mobile-categories-panel {
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
 </head>
+
 <body class="flex flex-col min-h-screen bg-gray-50">
+  <!-- Navbar -->
+  <nav class="bg-white shadow sticky top-0 z-50">
+     
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center relative">
+       <div class="flex gap-1 items-center">
+                <a href="/" class="inline-block w-10 h-10 rounded-full overflow-hidden border border-gray-200 scale-150">
+                    <img src="/static/{{settings.logo}}" alt="Admin Logo" class="w-full h-full object-cover">
+                </a>
+                
+            </div>
+      <a href="/" class="text-3xl font-extrabold text-blue-700 tracking-tight">Hidden <span
+          class="text-pink-500">Nepal</span></a>
+      <!-- Mobile Search Toggle (outside hamburger) -->
+      <button id="mobile-search-toggle" class="lg:hidden ml-3 text-2xl text-blue-700 focus:outline-none"
+        aria-expanded="false" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+        </svg>
+      </button>
 
-    <!-- Navbar -->
-    <nav class="bg-white shadow">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="flex-row items-center flex">
-                <img src="/static/{{settings.logo}}" alt="Hidden Nepal Logo" class="h-8 w-auto mr-2 border-r-[50%] pr-2">
-                <span class="text-2xl font-bold text-blue-600">Hidden Nepal</span>
-            </a>
-            <ul class="flex space-x-6">
-                <li><a href="/" class="text-gray-700 hover:text-blue-600">Home</a></li>
-                <li><a href="/about" class="text-gray-700 hover:text-blue-600">About</a></li>
-                <li><a href="/contact" class="text-gray-700 hover:text-blue-600">Contact</a></li>
-                <li><a href="{{url_for('auth.login')}}" class="text-gray-700 hover:text-blue-600">Login</a></li>
-                <li><a href="{{url_for('auth.register')}}" class="text-gray-700 hover:text-blue-600">Register</a></li>
-            </ul>
-        </div>
-    </nav>
+      <!-- Hamburger Icon for Mobile -->
+      <button id="nav-toggle" class="lg:hidden text-3xl text-blue-700 focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-8 h-8">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <!-- Mobile Categories Toggle (small screens) -->
+      <button id="mobile-categories-toggle" class="lg:hidden ml-3 text-2xl text-blue-700 focus:outline-none"
+        aria-expanded="false" aria-controls="mobile-categories-panel" title="Show categories"
+        style="position: relative; z-index: 70">
+        <!-- Chocolate icon (replaces hamburger on small screens) -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM7 9h2v2H7V9zm4 0h2v2h-2V9zm4 0h2v2h-2V9zM7 13h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z" />
+        </svg>
+      </button>
 
-    <!-- Main Content -->
-    <main class="flex-1 container mx-auto px-4 py-8">
-        {% block content %}
-        <!-- Page content goes here -->
-        {% endblock %}
+      <!-- Mobile Search Panel (appears when mobile-search-toggle clicked) -->
+      <div id="mobile-search-panel" class="hidden absolute right-4 top-16 z-50 bg-white p-3 rounded-lg shadow-lg w-64">
+        <form id="mobileNavSearchForm" action="/places" method="get" class="flex">
+          <input id="mobileNavSearchInput" name="q" type="text" placeholder="Search..."
+            class="flex-1 px-2 py-1 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-r hover:bg-blue-700">
+            Go..........
+          </button>
+        </form>
+      </div>
+      <div id="nav-menu"
+        class="hidden lg:flex lg:items-center w-full lg:w-auto flex-col lg:flex-row lg:space-x-6 mt-4 lg:mt-0 bg-white lg:bg-transparent p-4 lg:p-0 rounded-lg shadow-lg lg:shadow-none">
+        <ul class="flex flex-col lg:flex-row lg:space-x-6 space-y-2 lg:space-y-0 w-full lg:w-auto">
+          <li>
+            <a href="/" class="text-gray-700 font-semibold hover:text-blue-600 transition">Home</a>
+          </li>
+          <li>
+            <a href="/about" class="text-gray-700 font-semibold hover:text-blue-600 transition">About</a>
+          </li>
+          <li>
+            <a href="/contact" class="text-gray-700 font-semibold hover:text-blue-600 transition">Contact</a>
+          </li>
+          <li>
+            <a href="{{url_for('auth.login')}}"
+              class="text-gray-700 font-semibold hover:text-blue-600 transition">Login</a>
+          </li>
+          <li>
+            <a href="{{url_for('auth.register')}}"
+              class="text-gray-700 font-semibold hover:text-blue-600 transition">Register</a>
+          </li>
+        </ul>
+        <!-- Search Bar (responsive) -->
+        <form id="navSearchForm" action="/places" method="get" class="hidden lg:flex mt-4 lg:mt-0 w-full lg:w-auto">
+          <input id="navSearchInput" type="text" name="q" placeholder="Search..."
+            class="w-full lg:w-48 px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition" />
+          <button type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 transition font-semibold">
+            Search
+          </button>
+        </form>
+      </div>
+    </div>
+    <script>
+      // Responsive Navbar Toggle
+      const navToggle = document.getElementById("nav-toggle");
+      const navMenu = document.getElementById("nav-menu");
+      navToggle &&
+        navToggle.addEventListener("click", () =>
+          navMenu.classList.toggle("hidden")
+        );
+      document.addEventListener("click", function (ev) {
+        const panel = document.getElementById("nav-menu");
+        if (!panel || panel.classList.contains("hidden")) return;
+        const insidePanel = panel.contains(ev.target);
+        const isToggle = navToggle.contains(ev.target);
+        if (!insidePanel && !isToggle) {
+          panel.classList.add("hidden");
+          navToggle.setAttribute("aria-expanded", "false");
+        }
+      });
+      // Mobile categories toggle: attach after DOMContentLoaded so the panel element exists
+      document.addEventListener("DOMContentLoaded", function () {
+        const mobileCatsToggle = document.getElementById(
+          "mobile-categories-toggle"
+        );
+        const mobileCatsPanel = document.getElementById(
+          "mobile-categories-panel"
+        );
+        if (!mobileCatsToggle) return;
+
+        mobileCatsToggle.addEventListener("click", function (e) {
+          // ensure panel exists at click time
+          const panel = document.getElementById("mobile-categories-panel");
+          if (!panel) return;
+          const isHidden = panel.classList.contains("hidden");
+          if (isHidden) {
+            panel.classList.remove("hidden");
+            mobileCatsToggle.setAttribute("aria-expanded", "true");
+          } else {
+            panel.classList.add("hidden");
+            mobileCatsToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        // Close mobile panel if clicking outside
+        document.addEventListener("click", function (ev) {
+          const panel = document.getElementById("mobile-categories-panel");
+          if (!panel || panel.classList.contains("hidden")) return;
+          const insidePanel = panel.contains(ev.target);
+          const isToggle = mobileCatsToggle.contains(ev.target);
+          if (!insidePanel && !isToggle) {
+            panel.classList.add("hidden");
+            mobileCatsToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+      });
+
+      // Nav search: make desktop and mobile search forms behave the same and prefer AJAX loader if available
+      function handleSearchSubmit(e, inputEl) {
+        e.preventDefault();
+        const q = (inputEl || {}).value || "";
+        if (window.loadPlaces) {
+          const localInput = document.getElementById("searchInput");
+          if (localInput) localInput.value = q;
+          try {
+            window.loadPlaces(q);
+            console.log("hello");
+
+          } catch (err) {
+            // alert("Error loading search results. Redirecting to search page.");
+            window.location.href =
+              "/places" + (q ? "?q=" + encodeURIComponent(q) : "");
+          }
+        } else {
+          // alert("Redirecting to search page.");
+          window.location.href =
+            "/places" + (q ? "?q=" + encodeURIComponent(q) : "");
+        }
+      }
+
+      const navSearchForm = document.getElementById("navSearchForm");
+      const navSearchInput = document.getElementById("navSearchInput");
+      if (navSearchForm && navSearchInput) {
+        navSearchForm.addEventListener("submit", function (e) {
+          handleSearchSubmit(e, navSearchInput);
+        });
+      }
+
+      // Mobile search form/panel
+      const mobileSearchToggle = document.getElementById(
+        "mobile-search-toggle"
+      );
+      const mobileSearchPanel = document.getElementById(
+        "mobile-search-panel"
+      );
+      const mobileNavSearchForm = document.getElementById(
+        "mobileNavSearchForm"
+      );
+      const mobileNavSearchInput = document.getElementById(
+        "mobileNavSearchInput"
+      );
+
+      if (mobileSearchToggle && mobileSearchPanel) {
+        mobileSearchToggle.addEventListener("click", function (e) {
+          const isHidden = mobileSearchPanel.classList.contains("hidden");
+          if (isHidden) {
+            mobileSearchPanel.classList.remove("hidden");
+            mobileSearchToggle.setAttribute("aria-expanded", "true");
+            // focus input when shown
+            setTimeout(
+              () => mobileNavSearchInput && mobileNavSearchInput.focus(),
+              50
+            );
+          } else {
+            mobileSearchPanel.classList.add("hidden");
+            mobileSearchToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        // Close panel when clicking outside
+        document.addEventListener("click", function (ev) {
+          if (
+            !mobileSearchPanel ||
+            mobileSearchPanel.classList.contains("hidden")
+          )
+            return;
+          const inside =
+            mobileSearchPanel.contains(ev.target) ||
+            mobileSearchToggle.contains(ev.target);
+          if (!inside) {
+            mobileSearchPanel.classList.add("hidden");
+            mobileSearchToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
+
+      if (mobileNavSearchForm && mobileNavSearchInput) {
+        mobileNavSearchForm.addEventListener("submit", function (e) {
+          // close panel and perform search
+          if (mobileSearchPanel) mobileSearchPanel.classList.add("hidden");
+          handleSearchSubmit(e, mobileNavSearchInput);
+        });
+      }
+    </script>
+  </nav>
+
+  <!-- Mobile Categories Panel (visible on small screens when toggled) -->
+  <div id="mobile-categories-panel" class="md:hidden hidden bg-white shadow-lg border-b z-60"
+    style="position: relative">
+    <div class="container mx-auto px-4 py-4">
+      <h3 class="font-bold mb-3 text-lg text-blue-700 tracking-wide uppercase">
+        Nepal Highlights
+      </h3>
+      <ul class="space-y-2">
+        <li>
+          <a href=""
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Mountains & Peaks">Mountains & Peaks</a>
+        </li>
+        <li>
+          <a href=""
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Lakes & Rivers">Lakes & Rivers</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="National Parks & Wildlife">National Parks & Wildlife</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Waterfalls & Caves">Waterfalls & Caves</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Hills & Valleys">Hills & Valleys</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Cultural & Historical Heritage">Cultural & Historical Heritage</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Spiritual & Religious Sites">Spiritual & Religious Sites</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Adventure & Trekking">Adventure & Trekking</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Scenic Spots & Hill Stations">Scenic Spots & Hill Stations</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Food & Cuisine">Food & Cuisine</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Accommodation & Tourism Services">Accommodation & Tourism Services</a>
+        </li>
+        <li>
+          <a href="#"
+            class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+            data-name="Cities & Nightlife">Cities & Nightlife</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content with Sidebar -->
+  <div class="flex flex-1 w-full">
+    <!-- Sidebar -->
+    <aside id="explore-sidebar"
+      class="hidden md:block w-64 bg-white shadow-lg rounded-lg p-6 mr-8 mt-8 sticky top-28 self-start"
+      style="max-height: calc(100vh - 6rem)">
+      <!-- Show All button -->
+
+      <div class="mb-6">
+        <h3 class="font-bold mb-3 text-lg text-blue-700 tracking-wide uppercase">
+          Nepal Highlights
+        </h3>
+        <ul id="categoryList" class="space-y-2">
+          <li>
+            <a href=""
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Mountains & Peaks">Mountains & Peaks</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Lakes & Rivers">Lakes & Rivers</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="National Parks & Wildlife">National Parks & Wildlife</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Waterfalls & Caves">Waterfalls & Caves</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Hills & Valleys">Hills & Valleys</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Cultural & Historical Heritage">Cultural & Historical Heritage</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Spiritual & Religious Sites">Spiritual & Religious Sites</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Adventure & Trekking">Adventure & Trekking</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Scenic Spots & Hill Stations">Scenic Spots & Hill Stations</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Food & Cuisine">Food & Cuisine</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Accommodation & Tourism Services">Accommodation & Tourism Services</a>
+          </li>
+          <li>
+            <a href="#"
+              class="category-link block w-full text-left px-3 py-2 rounded-lg font-semibold text-gray-700 hover:text-blue-600 transition"
+              data-name="Cities & Nightlife">Cities & Nightlife</a>
+          </li>
+        </ul>
+      </div>
+      <div class="mb-4 hidden">
+        <label class="block font-semibold text-blue-700 text-sm mb-2">
+          Show the places within the radius of
+          <input id="sidebarRadiusInput" type="number" min="0.1" step="0.1" value="0.5"
+            class="mx-2 w-24 px-2 py-1 border rounded" />
+          km of my location.
+        </label>
+        <button id="sidebarViewPlacesBtn"
+          class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+          View Places
+        </button>
+      </div>
+    </aside>
+    <main class="flex-1 containe  mx-auto px-4 py-8 font-normal text-gray-800 md:mt-8">
+
+      {% block content %}
+      <!-- Page content goes here -->
+      {% endblock %}
     </main>
+  </div>
+  <script>
+    // Sidebar and nav helpers
+    function clearActiveCategory(sidebar) {
+      const prev = sidebar.querySelector(".category-item.category-active");
+      if (prev) {
+        prev.classList.remove(
+          "category-active",
+          "bg-blue-50",
+          "text-blue-700"
+        );
+        prev.classList.add("text-gray-700");
+      }
+    }
 
-    <!-- Footer -->
-    <footer class="bg-white shadow mt-8">
-        <div class="container mx-auto px-4 py-6 text-center text-gray-500">
-            &copy; {{ year | default(2024) }} Hidden Nepal. All rights reserved.
+    function setActiveCategory(el) {
+      el.classList.remove("text-gray-700");
+      el.classList.add("category-active", "bg-blue-50", "text-blue-700");
+    }
+
+    function onCategoryClick(el, category) {
+      const sidebar = document.getElementById("explore-sidebar");
+      if (sidebar) clearActiveCategory(sidebar);
+      setActiveCategory(el);
+
+      // If a mobile categories panel is open, hide it after a selection so mobile UX is clean
+      try {
+        const mobilePanel = document.getElementById(
+          "mobile-categories-panel"
+        );
+        const mobileToggle = document.getElementById(
+          "mobile-categories-toggle"
+        );
+        if (mobilePanel && !mobilePanel.classList.contains("hidden")) {
+          mobilePanel.classList.add("hidden");
+          if (mobileToggle)
+            mobileToggle.setAttribute("aria-expanded", "false");
+        }
+      } catch (e) { }
+
+      if (document.getElementById("placesGrid")) {
+        fetch(
+          `/api/places/advanced_filter?category=${encodeURIComponent(
+            category
+          )}`
+        )
+          .then((res) => res.json())
+          .then((places) => {
+            if (window.renderPlaces) window.renderPlaces(places);
+            else
+
+              window.location.href = `/places?category=${encodeURIComponent(
+                category
+              )}`;
+          })
+          .catch((err) =>
+            console.error("Error fetching category places:", err)
+          );
+      } else {
+        window.location.href = `/places?category=${encodeURIComponent(
+          category
+        )}`;
+      }
+    }
+
+    function onShowAllClick() {
+      const sidebar = document.getElementById("explore-sidebar");
+      if (sidebar) clearActiveCategory(sidebar);
+      if (window.loadPlaces) window.loadPlaces();
+      else window.location.href = "/places";
+    }
+
+    // Deprecated: old showNearMe implementation replaced by View Places flow
+    // New handler defined below: sidebarViewPlacesHandler
+
+    // Sidebar View Places UI logic (new)
+    window.sidebarUserLocation = null;
+    window.sidebarUserRadius = 0.5;
+
+    function sidebarViewPlacesHandler() {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      const input = document.getElementById("sidebarRadiusInput");
+      let radiusKm = 0.5;
+      if (input) {
+        const v = parseFloat(input.value);
+        if (!Number.isNaN(v) && v > 0) radiusKm = v;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          // If the current page supports client-side nearby loading, use it
+          if (
+            document.getElementById("placesGrid") &&
+            window.loadPlacesNearby
+          ) {
+            // store for potential reuse
+            window.sidebarUserLocation = { lat: lat, lng: lng };
+            window.sidebarUserRadius = radiusKm;
+            // Also set globals commonly used by the places list template
+            window.userLocation = { lat: lat, lng: lng };
+            window.userRadius = radiusKm;
+            // request and render nearby places
+            try {
+              window.loadPlacesNearby(lat, lng, radiusKm);
+            } catch (err) {
+              console.error("Error calling loadPlacesNearby:", err);
+            }
+
+            // Also fetch to detect empty result and inform the user
+            fetch(
+              `/api/nearby?lat=${encodeURIComponent(
+                lat
+              )}&lng=${encodeURIComponent(lng)}&radius=${encodeURIComponent(
+                radiusKm
+              )}`
+            )
+              .then((r) => r.json())
+              .then((data) => {
+                if (!data || (Array.isArray(data) && data.length === 0)) {
+                  alert("No nearby places found.");
+                }
+              })
+              .catch((err) => console.error("Nearby fetch error:", err));
+          } else {
+            // fallback: redirect to server-side places list (include radius)
+            window.location.href = `/places?nearby=1&lat=${lat}&lng=${lng}&radius=${radiusKm}`;
+          }
+        },
+        (err) => {
+          console.error("Geolocation error:", err);
+          alert("Location access denied or unavailable.");
+        }
+      );
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const viewBtn = document.getElementById("sidebarViewPlacesBtn");
+      if (viewBtn) viewBtn.onclick = sidebarViewPlacesHandler;
+    });
+    // Attach category link handlers for dynamic loading
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll(".category-link").forEach((link) => {
+        link.addEventListener("click", function (e) {
+          e.preventDefault();
+          const catId = this.dataset.id;
+          const catName = this.dataset.name;
+          // toggle active styling
+          document.querySelectorAll(".category-link.active").forEach((a) => {
+            a.classList.remove("active", "bg-blue-50", "text-blue-700");
+            a.classList.add("text-gray-700");
+          });
+          this.classList.add("active", "bg-blue-50", "text-blue-700");
+
+          let url;
+          if (catId)
+            url = `/api/places/by_category?category_id=${encodeURIComponent(
+              catId
+            )}`;
+          else
+            url = `/api/places/by_category?category=${encodeURIComponent(
+              catName
+            )}`;
+
+          fetch(url)
+            .then((res) => res.json())
+            .then((data) => {
+              const grid =
+                document.getElementById("placesGrid") ||
+                document.getElementById("places-container");
+              if (!grid) {
+                console.warn(
+                  "No places container found to render category results"
+                );
+                // hide mobile categories panel if present
+                try {
+                  const panel = document.getElementById(
+                    "mobile-categories-panel"
+                  );
+                  const toggle = document.getElementById(
+                    "mobile-categories-toggle"
+                  );
+                  if (panel && !panel.classList.contains("hidden")) {
+                    panel.classList.add("hidden");
+                    if (toggle) toggle.setAttribute("aria-expanded", "false");
+                  }
+                } catch (e) { }
+                return;
+              }
+              let html = "";
+              if (!data || data.length === 0) {
+                html =
+                  '<div class="col-span-full text-center text-gray-500">No places found in this category.</div>';
+              } else {
+                for (const place of data) {
+                  // normalize image URL: if it's a bare filename, prefix with /static/images/
+                  function normalizeImageUrl(url) {
+
+                    return url.slice(4);
+                  }
+                  const image = normalizeImageUrl(place.image_url);
+                  const pid =
+                    place.place_id ||
+                    place.id ||
+                    place.ID ||
+                    place.placeId ||
+                    "";
+                  html += `\
+                      <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">\
+                        <img src="${image}" alt="${place.name || ""
+                    }" class="w-full h-64 object-cover" />\
+                        <div class="p-4">\
+                          <a href="/places/${pid}" class="text-lg font-semibold text-blue-700 hover:underline">${place.name || ""
+                    }</a>\
+                          <p class="text-gray-600">${place.description
+                      ? place.description.substring(0, 100) +
+                      (place.description.length > 100 ? "..." : "")
+                      : ""
+                    }</p>\
+                          <p class="text-sm text-gray-500"><strong>Location:</strong> ${place.location || ""
+                    }</p>\
+                          <div class="mt-3">
+                            <button onclick="(window.viewDetails)?viewDetails(event, '${pid}'):(window.location.href='/places/${pid}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
+                          </div>\
+                        </div>\
+                      </div>`;
+                }
+              }
+              grid.innerHTML = html;
+              // hide mobile categories panel after rendering results
+              try {
+                const panel = document.getElementById(
+                  "mobile-categories-panel"
+                );
+                const toggle = document.getElementById(
+                  "mobile-categories-toggle"
+                );
+                if (panel && !panel.classList.contains("hidden")) {
+                  panel.classList.add("hidden");
+                  if (toggle) toggle.setAttribute("aria-expanded", "false");
+                }
+              } catch (e) { }
+            })
+            .catch((err) =>
+              console.error("Error loading category places:", err)
+            );
+        });
+      });
+    });
+
+    // Prevent scroll propagation for sidebar and mobile panel so page doesn't scroll
+    function preventScrollPropagation(el) {
+      if (!el) return;
+      // Wheel (desktop)
+      el.addEventListener(
+        "wheel",
+        function (e) {
+          const delta = e.deltaY;
+          const atTop = el.scrollTop === 0;
+          const atBottom =
+            Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) <= 1;
+          if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
+            e.preventDefault();
+          }
+        },
+        { passive: false }
+      );
+
+      // Touch (mobile)
+      let startY = 0;
+      el.addEventListener(
+        "touchstart",
+        function (e) {
+          if (e.touches && e.touches.length) startY = e.touches[0].clientY;
+        },
+        { passive: true }
+      );
+      el.addEventListener(
+        "touchmove",
+        function (e) {
+          if (!e.touches || !e.touches.length) return;
+          const curY = e.touches[0].clientY;
+          const diff = startY - curY;
+          const atTop = el.scrollTop === 0;
+          const atBottom =
+            Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) <= 1;
+          if ((diff < 0 && atTop) || (diff > 0 && atBottom)) {
+            e.preventDefault();
+          }
+        },
+        { passive: false }
+      );
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      preventScrollPropagation(document.getElementById("explore-sidebar"));
+      preventScrollPropagation(
+        document.getElementById("mobile-categories-panel")
+      );
+    });
+
+
+    // Add event listeners for all category buttons
+    document.querySelectorAll('.category-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const categoryName = e.target.dataset.name;
+        window.location.href = `/places?category=${encodeURIComponent(categoryName)}`;
+      });
+    });
+  </script>
+
+  <!-- Footer -->
+  <footer class="bg-white shadow mt-8 border-t">
+    <div class="container mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8 text-gray-700">
+      <!-- Brand & Mission -->
+      <div>
+        <div class="flex items-center mb-2">
+          <span class="text-3xl mr-2">🌄</span>
+          <span class="text-2xl font-extrabold text-blue-700">Hidden Nepal</span>
         </div>
-    </footer>
-
+        <div class="text-blue-700 font-semibold mb-1">
+          Discover Nepal’s Hidden Gems
+        </div>
+        <div class="text-sm mb-4">
+          Connecting travelers with unexplored beauty of Nepal while
+          preserving culture and nature.
+        </div>
+      </div>
+      <!-- Quick Links -->
+      <div>
+        <div class="font-bold mb-2 text-blue-800">Quick Links</div>
+        <ul class="space-y-1">
+          <li><a href="/" class="hover:text-blue-600">Home</a></li>
+          <!-- Explore link removed as requested -->
+          <li><a href="/about" class="hover:text-blue-600">About Us</a></li>
+          <li><a href="/contact" class="hover:text-blue-600">Contact</a></li>
+          <li><a href="/faq" class="hover:text-blue-600">FAQ</a></li>
+        </ul>
+      </div>
+      <!-- Categories removed from footer as requested -->
+      <!-- Contact & Socials -->
+      <div>
+        <div class="font-bold mb-2 text-green-700">Contact & Socials</div>
+        <div class="mb-1 text-sm">
+          Email:
+          <a href="mailto:support@hiddennepal.com" class="text-blue-700 hover:underline">support@hiddennepal.com</a>
+        </div>
+        <div class="mb-1 text-sm">
+          Phone:
+          <a href="tel:+977-XXXX-XXXX" class="text-blue-700 hover:underline">+977-</a>
+        </div>
+        <div class="flex space-x-3 mt-2">
+          <a href="#" class="text-blue-700 hover:text-blue-900 text-2xl" title="Facebook"><svg fill="currentColor"
+              viewBox="0 0 24 24" class="w-6 h-6">
+              <path
+                d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0" />
+            </svg></a>
+          <a href="#" class="text-pink-600 hover:text-pink-800 text-2xl" title="Instagram"><svg fill="currentColor"
+              viewBox="0 0 24 24" class="w-6 h-6">
+              <path
+                d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.974.974 1.246 2.242 1.308 3.608.058 1.266.069 1.646.069 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.974.974-2.242 1.246-3.608 1.308-1.266.058-1.646.069-4.85.069s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.974-.974-1.246-2.242-1.308-3.608C2.175 15.647 2.163 15.267 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608C4.515 2.497 5.783 2.225 7.149 2.163 8.415 2.105 8.795 2.094 12 2.094zm0-2.163C8.741 0 8.332.012 7.052.07 5.771.128 4.635.4 3.661 1.374c-.974.974-1.246 2.242-1.308 3.608C2.175 7.353 2.163 7.733 2.163 12s.012 4.647.07 5.918c.062 1.366.334 2.633 1.308 3.608.974.974 2.242 1.246 3.608 1.308 1.266.058 1.646.069 4.85.069s3.584-.012 4.85-.07c1.366-.062 2.633-.334 3.608-1.308.974-.974 1.246-2.242 1.308-3.608.058-1.266.069-1.646.069-4.85s-.012-3.584-.07-4.85c-.062-1.366-.334-2.633-1.308-3.608-.974-.974-2.242-1.246-3.608-1.308C15.647 2.175 15.267 2.163 12 2.163z" />
+              <circle cx="12" cy="12" r="3.5" />
+              <circle cx="18.406" cy="5.594" r="1.44" />
+            </svg></a>
+          <a href="#" class="text-red-600 hover:text-red-800 text-2xl" title="YouTube"><svg fill="currentColor"
+              viewBox="0 0 24 24" class="w-6 h-6">
+              <path
+                d="M23.498 6.186a2.994 2.994 0 0 0-2.112-2.112C19.545 3.5 12 3.5 12 3.5s-7.545 0-9.386.574A2.994 2.994 0 0 0 .502 6.186C0 8.027 0 12 0 12s0 3.973.502 5.814a2.994 2.994 0 0 0 2.112 2.112C4.455 20.5 12 20.5 12 20.5s7.545 0 9.386-.574a2.994 2.994 0 0 0 2.112-2.112C24 15.973 24 12 24 12s0-3.973-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg></a>
+          <a href="#" class="text-blue-400 hover:text-blue-700 text-2xl" title="Twitter"><svg fill="currentColor"
+              viewBox="0 0 24 24" class="w-6 h-6">
+              <path
+                d="M24 4.557a9.83 9.83 0 0 1-2.828.775 4.932 4.932 0 0 0 2.165-2.724c-.951.564-2.005.974-3.127 1.195a4.916 4.916 0 0 0-8.38 4.482C7.691 8.095 4.066 6.13 1.64 3.161c-.542.929-.856 2.01-.857 3.17 0 2.188 1.115 4.117 2.813 5.254a4.904 4.904 0 0 1-2.229-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.936 4.936 0 0 1-2.224.084c.627 1.956 2.444 3.377 4.6 3.417A9.867 9.867 0 0 1 0 19.54a13.94 13.94 0 0 0 7.548 2.212c9.058 0 14.009-7.513 14.009-14.009 0-.213-.005-.425-.014-.636A10.012 10.012 0 0 0 24 4.557z" />
+            </svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="container mx-auto px-4 py-4 text-center text-gray-400 text-xs border-t mt-8">
+      &copy; {{ year | default(2024) }} Hidden Nepal. All rights reserved.
+    </div>
+  </footer>
 </body>
+
 </html>
