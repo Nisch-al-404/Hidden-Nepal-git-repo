@@ -2,7 +2,7 @@
     "mysql": {
         "host": "localhost",
         "user": "root",
-        "password": "root1234",
+        "password": "",
         "database": "Project2"
     }
 }
