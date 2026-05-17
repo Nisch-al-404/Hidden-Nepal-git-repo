@@ -14,8 +14,6 @@ import requests
 
 @viewer_bp.route('/')
 def homepage():
-
-
     return render_template("index.html")
 
 

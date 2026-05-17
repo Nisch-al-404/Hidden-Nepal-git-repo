@@ -44,11 +44,13 @@ def create_app():
     from .contributor import contributor_bp
     from .viewer import viewer_bp
     from .auth import auth_bp
+    from .viewer.api import api_bp
 
     app.register_blueprint(viewer_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(contributor_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(api_bp)
 
     return app
 
