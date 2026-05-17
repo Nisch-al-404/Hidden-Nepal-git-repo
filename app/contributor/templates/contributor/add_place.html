@@ -1,7 +1,7 @@
 {% extends "contributor/contributor_layout.html" %}
 {% block content %}
 
-<section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-pink-100 py-10 px-4">
+<section class="min-h-screen flex items-center justify-center py-10 px-4 ">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -46,7 +46,132 @@
         <textarea name="description" required rows="4"
           class="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none shadow-sm"></textarea>
       </div>
+    <!-- Categories (multiple select chips) -->
+    <div>
+      <label class="block text-gray-700 font-semibold mb-1">Categories</label>
+      <p class="text-sm text-gray-500 mb-3">Select one or more categories relevant to this place.</p>
 
+      <style>
+        .cat-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 9999px;
+          background: #ffffff;
+          color: #374151;
+          cursor: pointer;
+          transition: all 150ms ease;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+          user-select: none;
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+        .cat-chip .emoji { font-size: 1.15rem; line-height: 1; }
+
+        input.cat-checkbox { position: absolute; left: -9999px; } /* visually hide native checkbox */
+
+        /* checked state */
+        input.cat-checkbox:checked + .cat-chip {
+          background: linear-gradient(90deg,#4f46e5 0%, #06b6d4 100%);
+          color: #fff;
+          border-color: transparent;
+          transform: translateY(-4px);
+          box-shadow: 0 8px 20px rgba(79,70,229,0.12);
+        }
+
+        /* hover/focus affordance */
+        .cat-chip:hover { transform: translateY(-2px); }
+        input.cat-checkbox:focus + .cat-chip { outline: 3px solid rgba(99,102,241,0.18); outline-offset: 3px; }
+      </style>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Mountains &amp; Peaks" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🏔️</span><span>Mountains &amp; Peaks</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Lakes &amp; Rivers" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🌊</span><span>Lakes &amp; Rivers</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="National Parks &amp; Wildlife" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🦌</span><span>National Parks &amp; Wildlife</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Waterfalls &amp; Caves" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">💧</span><span>Waterfalls &amp; Caves</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Hills &amp; Valleys" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🌄</span><span>Hills &amp; Valleys</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Cultural &amp; Historical Heritage" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🏛️</span><span>Cultural &amp; Historical</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Spiritual &amp; Religious Sites" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🛕</span><span>Spiritual &amp; Religious</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Adventure &amp; Trekking" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🧗</span><span>Adventure &amp; Trekking</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Scenic Spots &amp; Hill Stations" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🌅</span><span>Scenic Spots &amp; Hill Stations</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Food &amp; Cuisine" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🍲</span><span>Food &amp; Cuisine</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Accommodation &amp; Tourism Services" class="cat-checkbox"  />
+          <div class="cat-chip">
+            <span class="emoji">🛏️</span><span>Accommodation &amp; Services</span>
+          </div>
+        </label>
+
+        <label class="relative">
+          <input type="checkbox" name="categories[]" value="Cities &amp; Nightlife" class="cat-checkbox" />
+          <div class="cat-chip">
+            <span class="emoji">🏙️</span><span>Cities &amp; Nightlife</span>
+          </div>
+        </label>
+      </div>
+    </div>
       <!-- Location -->
       <div>
         <label class="block text-gray-700 font-semibold mb-1">Location</label>

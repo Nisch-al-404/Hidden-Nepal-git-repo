@@ -1,8 +1,23 @@
 {% extends "layout.html" %} {% block content %}
 <div
   id="placesGrid"
-  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
-></div>
+  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8"
+>
+
+{% for place in places %}
+<div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+  <img src="{{ place.image_url[4:] }}" alt="{{ place.name|default('') }}" class="w-full h-64 object-cover" />
+  <div class="p-4">
+    <a href="/places/{{ place.place_id }}" class="text-lg font-semibold text-blue-700 hover:underline">{{ place.name|default('') }}</a>
+    <p class="text-gray-600">{{ place.description|truncate(100) }}</p>
+    <p class="text-sm text-gray-500"><strong>Location:</strong> {{ place.location|default('') }}</p>
+    <div class="mt-3">
+      <button onclick="viewDetails(event, '{{ place.place_id }}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
+    </div>
+  </div>
+</div>
+{% endfor %}
+</div>
 
 <script>
   // --- User Location and Radius ---
@@ -46,10 +61,15 @@
     }
     const res = await fetch(url);
     const places = await res.json();
+
+    console.log("places list ko :",places);
+   
+    
     renderPlaces(places);
   }
 
   function renderPlaces(places) {
+     console.log("yo search ko :",places);
     let html = "";
     if (!places || places.length === 0) {
       html =
@@ -92,8 +112,8 @@
         let starsHtml = "";
         let ratingText = "";
         if (!total) {
-          starsHtml = "☆☆☆☆☆";
-          ratingText = "No reviews yet";
+          starsHtml = ''
+          ratingText = ''
         } else {
           const filled = Math.max(0, Math.min(5, Math.floor(avg || 0)));
           starsHtml = "★".repeat(filled) + "☆".repeat(5 - filled);
@@ -102,27 +122,23 @@
         }
 
         html += `
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ${
-          highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
-        }">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col ">
             <img src="${
-              place.image_url || "/static/images/placeholder.jpg"
+              (place.image_url || "/static/images/placeholder.jpg").slice(4)
             }" alt="Image" class="w-full h-64 object-cover" />
           <div class="p-4 flex-1 flex flex-col justify-between">
             <div>
                 <a href="/places/${pid}" class="text-lg font-semibold mb-2 text-blue-700 hover:underline">${
           place.name
-        }</a>
+        } </a>
               <p class="text-gray-600">${
                 place.description
                   ? place.description.substring(0, 100) +
                     (place.description.length > 100 ? "..." : "")
                   : ""
               }</p>
-              <div class="flex items-center gap-1 mt-2">
-                <span class="text-yellow-400">${starsHtml}</span>
-                <span class="text-xs text-gray-500">${ratingText}</span>
-              </div>
+
+              <button onclick="viewDetails(event, '${pid}')" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
             </div>
           </div>
         </div>
@@ -163,6 +179,15 @@
     } else {
       alert("Geolocation is not supported by your browser.");
     }
+  }
+   async function viewDetails(e, id) {
+    // Navigate to the dedicated place detail page instead of opening a modal
+    try {
+      e && e.stopPropagation && e.stopPropagation();
+    } catch (err) {
+      /* ignore */
+    }
+    window.location.href = "/places/" + encodeURIComponent(String(id));
   }
 
   function onRadiusChange(e) {

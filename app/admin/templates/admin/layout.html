@@ -5,25 +5,46 @@
     <meta charset="UTF-8">
     <title>{% block title %}Admin Panel{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/{{settings.favicon}}" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
+     {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <!-- Floating messages container: centered, max-content width -->
+        <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-auto max-w-max">
+            {% for category, message in messages %}
+            <div role="status" class="p-4 rounded-lg min-w-0 flex items-center justify-between shadow transition-opacity duration-200
+                {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                <span class="mr-4">{{ message }}</span>
+                <button aria-label="Dismiss" onclick="this.parentElement.remove()" class="text-sm hover:opacity-75">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
     <!-- Top Navbar -->
-    <nav class="fixed w-full bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-50">
-        <div class="flex items-center">
-            <img src="/static/images/logo.png" alt="Admin Logo" class="h-10 mr-3">
-            <span class="text-xl font-bold text-gray-800">Admin Panel</span>
+    <nav class="fixed w-full bg-white border-b border-gray-200 px-4 py-3 flex flex-col z-40">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/" class="inline-block w-10 h-10 rounded-full overflow-hidden border border-gray-200 scale-150">
+                    <img src="/static/{{settings.logo}}" alt="Admin Logo" class="w-full h-full object-cover">
+                </a>
+                <span class=" px-5 text-xl font-bold text-gray-800">Admin Panel</span>
+            </div>
+            
+            <div class="md:hidden">
+                <button id="menu-btn"
+                    class="text-gray-700 focus:outline-none hover:bg-gray-200 hover:text-gray-900 rounded p-1 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div class="md:hidden">
-            <button id="menu-btn"
-                class="text-gray-700 focus:outline-none hover:bg-gray-200 hover:text-gray-900 rounded p-1 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-        </div>
+
     </nav>
 
     <!-- Grid Layout: Sidebar + Main -->
@@ -31,7 +52,7 @@
         <!-- Sidebar -->
         <aside id="sidebar"
             class="top-14 left-0 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-gray-200 hidden md:flex flex-col z-30 transition-all duration-200">
-            <nav class="flex flex-col gap-1 fixed z-50 p-1">
+            <nav class="flex flex-col gap-1 fixed z-40 p-1 mt-5">
                 <!-- Expand/Minimize Button (placed inside the border/sidebar) -->
                 <button id="sidebar-toggle"
                     class="bg-white border border-gray-200 rounded-full shadow p-1 transition hover:bg-gray-100 w-7 focus:outline-none md:block absolute top-3 left-16 md:left-64 ml-[-35px]">
@@ -43,7 +64,7 @@
                 </button>
                 <!-- Sidebar links -->
                 <a href="{{ url_for('admin.admin_panel') }}"
-                    class="group flex items-center w-full {{ 'bg-[#eaedf1]' if active_page=='dashboard' else '' }}">
+                    class="group flex items-center w-full ">
                     <div
                         class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='dashboard' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
                         <div class="text-[#101518]" data-icon="House" data-size="24px" data-weight="fill">
@@ -58,7 +79,7 @@
                     </div>
                 </a>
                 <a href="{{ url_for('admin.manage_places') }}"
-                    class="group flex items-center w-full {{ 'bg-[#eaedf1]' if active_page=='manage_places' else '' }}">
+                    class="group flex items-center w-full ">
                     <div
                         class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='manage_places' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
                         <div class="text-[#101518]" data-icon="MapPin" data-size="24px" data-weight="regular">
@@ -73,7 +94,7 @@
                     </div>
                 </a>
                 <a href="{{ url_for('admin.manage_users') }}"
-                    class="group flex items-center w-full {{ 'bg-[#eaedf1]' if active_page=='manage_users' else '' }}">
+                    class="group flex items-center w-full ">
                     <div
                         class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='manage_users' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
                         <div class="text-[#101518]" data-icon="Users" data-size="24px" data-weight="regular">
@@ -87,39 +108,10 @@
                         <p class="sidebar-label text-[#101518] text-sm font-medium leading-normal ml-2">Manage Users</p>
                     </div>
                 </a>
-                <a href="{{ url_for('admin.contributor_requests') }}"
-                    class="group flex items-center w-full {{ 'bg-[#eaedf1]' if active_page=='contributor_requests' else '' }}">
-                    <div
-                        class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='contributor_requests' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
-                        <div class="text-[#101518]" data-icon="UserPlus" data-size="24px" data-weight="regular">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                                viewBox="0 0 256 256">
-                                <path
-                                    d="M256,136a8,8,0,0,1-8,8H232v16a8,8,0,0,1-16,0V144H200a8,8,0,0,1,0-16h16V112a8,8,0,0,1,16,0v16h16A8,8,0,0,1,256,136Zm-57.87,58.85a8,8,0,0,1-12.26,10.3C165.75,181.19,138.09,168,108,168s-57.75,13.19-77.87,37.15a8,8,0,0,1-12.25-10.3c14.94-17.78,33.52-30.41,54.17-37.17a68,68,0,1,1,71.9,0C164.6,164.44,183.18,177.07,198.13,194.85ZM108,152a52,52,0,1,0-52-52A52.06,52.06,0,0,0,108,152Z">
-                                </path>
-                            </svg>
-                        </div>
-                        <p class="sidebar-label text-[#101518] text-sm font-medium leading-normal ml-2">Contributor
-                            Requests</p>
-                    </div>
-                </a>
-                <a href="{{ url_for('admin.admin_panel') }}"
-                    class="group flex items-center w-full {{ 'bg-[#eaedf1]' if active_page=='reports' else '' }}">
-                    <div
-                        class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='reports' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
-                        <div class="text-[#101518]" data-icon="PresentationChart" data-size="24px" data-weight="regular">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                                viewBox="0 0 256 256">
-                                <path
-                                    d="M216,40H136V24a8,8,0,0,0-16,0V40H40A16,16,0,0,0,24,56V176a16,16,0,0,0,16,16H79.36L57.75,219a8,8,0,0,0,12.5,10l29.59-37h56.32l29.59,37a8,8,0,1,0,12.5-10l-21.61-27H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,136H40V56H216V176ZM104,120v24a8,8,0,0,1-16,0V120a8,8,0,0,1,16,0Zm32-16v40a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm32-16v56a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Z">
-                                </path>
-                            </svg>
-                        </div>
-                        <p class="sidebar-label text-[#101518] text-sm font-medium leading-normal ml-2">Reports/Stats</p>
-                    </div>
-                </a>
+                
+
                 <a href="{{ url_for('admin.settings') }}"
-                    class="group flex items-center w-full {{ 'bg-[#eaedf1]' if active_page=='settings' else '' }}">
+                    class="group flex items-center w-full ">
                     <div
                         class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='settings' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
                         <div class="text-[#101518]" data-icon="Gear" data-size="24px" data-weight="regular">
@@ -185,13 +177,13 @@
 
     <!-- Mobile Sidebar (unchanged) -->
     <div id="mobile-menu" class="fixed inset-0 z-40 bg-black bg-opacity-40 md:hidden hidden">
-        <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col pt-8 z-50">
+        <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col pt-8 z-40">
             
             <nav class="flex flex-col gap-1 mt-8">
                 <!-- ... mobile sidebar links ... (keep as is) -->
                 <a href="{{url_for('admin.admin_panel')}}" class="group">
                     <div
-                        class="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#eaedf1] group-hover:bg-blue-100 group-active:bg-blue-200 transition">
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl {{ 'bg-[#eaedf1]' if active_page=='dashboard' else '' }} group-hover:bg-blue-100 group-active:bg-blue-200 transition">
                         <div class="text-[#101518]" data-icon="House" data-size="24px" data-weight="fill">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -203,9 +195,9 @@
                         <p class="text-[#101518] text-sm font-medium leading-normal">Dashboard</p>
                     </div>
                 </a>
-                <a href="#" class="group">
+                <a href="{{url_for('admin.manage_places')}}" class="group">
                     <div
-                        class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full {{ 'bg-[#eaedf1]' if active_page=='manage_places' else '' }}">
                         <div class="text-[#101518]" data-icon="MapPin" data-size="24px" data-weight="regular">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -218,8 +210,8 @@
                         </p>
                     </div>
                 </a>
-                <a href="#" class="group">
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
+                <a href="{{url_for('admin.manage_users')}}" class="group">
+                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full {{ 'bg-[#eaedf1]' if active_page=='manage_users' else '' }}">
                         <div class="text-[#101518]" data-icon="Users" data-size="24px" data-weight="regular">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -231,35 +223,10 @@
                         <p class=" text-[#101518] text-sm font-medium leading-normal">Manage Users</p>
                     </div>
                 </a>
-                <a href="#" class="group">
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
-                        <div class="text-[#101518]" data-icon="UserPlus" data-size="24px" data-weight="regular">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                                viewBox="0 0 256 256">
-                                <path
-                                    d="M256,136a8,8,0,0,1-8,8H232v16a8,8,0,0,1-16,0V144H200a8,8,0,0,1,0-16h16V112a8,8,0,0,1,16,0v16h16A8,8,0,0,1,256,136Zm-57.87,58.85a8,8,0,0,1-12.26,10.3C165.75,181.19,138.09,168,108,168s-57.75,13.19-77.87,37.15a8,8,0,0,1-12.25-10.3c14.94-17.78,33.52-30.41,54.17-37.17a68,68,0,1,1,71.9,0C164.6,164.44,183.18,177.07,198.13,194.85ZM108,152a52,52,0,1,0-52-52A52.06,52.06,0,0,0,108,152Z">
-                                </path>
-                            </svg>
-                        </div>
-                        <p class=" text-[#101518] text-sm font-medium leading-normal ">Contributor Requests</p>
-                    </div>
-                </a>
-                <a href="#" class="group">
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
-                        <div class="text-[#101518]" data-icon="PresentationChart" data-size="24px"
-                            data-weight="regular">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                                viewBox="0 0 256 256">
-                                <path
-                                    d="M216,40H136V24a8,8,0,0,0-16,0V40H40A16,16,0,0,0,24,56V176a16,16,0,0,0,16,16H79.36L57.75,219a8,8,0,0,0,12.5,10l29.59-37h56.32l29.59,37a8,8,0,1,0,12.5-10l-21.61-27H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,136H40V56H216V176ZM104,120v24a8,8,0,0,1-16,0V120a8,8,0,0,1,16,0Zm32-16v40a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm32-16v56a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Z">
-                                </path>
-                            </svg>
-                        </div>
-                        <p class="text-[#101518] text-sm font-medium leading-normal">Reports/Stats</p>
-                    </div>
-                </a>
-                <a href="#" class="group">
-                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full">
+                
+        
+                <a href="{{url_for('admin.settings')}}" class="group">
+                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition w-full {{ 'bg-[#eaedf1]' if active_page=='settings' else '' }}">
                         <div class="text-[#101518]" data-icon="Gear" data-size="24px" data-weight="regular">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
                                 viewBox="0 0 256 256">
@@ -271,7 +238,7 @@
                         <p class="text-[#101518] text-sm font-medium leading-normal ">Settings</p>
                     </div>
                 </a>
-                <!-- ... repeat for other links ... -->
+                
                 <a href="{{url_for('auth.logout')}}" class="group">
                     <div
                         class="flex items-center gap-3 px-3 py-2 rounded-xl group-hover:bg-blue-100 group-active:bg-blue-200 transition">

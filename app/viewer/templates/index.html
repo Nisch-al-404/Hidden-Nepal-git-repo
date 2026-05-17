@@ -1,199 +1,393 @@
-{% extends "layout.html" %} {% block content %}
-<div
-  id="placesGrid"
-  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
-></div>
 
-<!-- Modal for Place Details -->
-<div
-  id="detailsModal"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
->
-  <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-    <button
-      onclick="closeModal()"
-      class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl"
-    >
-      &times;</button
-    >...........................................
-    <div id="modalContent">Loading...</div>
+    
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/{{settings.favicon}}" type="image/x-icon">
+    <title>Aesthetic Dynamic Hero Section</title>
+    
+    <style>
+        /* 🎨 CSS Styling */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* --- Hero Section Styling --- */
+        .hero {
+            height: 100vh;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            background-color: #333;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            z-index: 1;
+        }
+
+        /* --- Glassmorphism Effect on Content --- */
+        .hero-content {
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            padding: 30px 60px;
+            border-radius: 20px;
+            transition: opacity 0.5s ease-in-out;
+            display: flex; /* Added to arrange items vertically */
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-size: 4em;
+            margin-bottom: 5px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .hero p {
+            font-size: 1.5em;
+            font-weight: 300;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            margin-bottom: 25px; /* Add space above the CTA */
+        }
+        
+        /* --- CTA Button Styling --- */
+        #cta-button {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #fff;
+            background-color: #007bff; /* Primary Blue */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        #cta-button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+            transform: translateY(-2px);
+        }
+
+        /* --- Placeholder Content Below Hero --- */
+        .content-section {
+            height: 150vh; /* Just to make the scroll visible */
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <header id="hero-section" class="hero" style="background-image: url('/static/images/hero1.jpeg');">
+        <div id="bg-overlay"></div>
+        
+        <div id="hero-content" class="hero-content">
+            <h1 id="hero-title">{{settings.site_name}}</h1>
+            <p id="hero-subtitle">Breathtaking views await your journey.</p>
+            <button id="cta-button">Explore More Content</button>
+        </div>
+    </header>
+    
+
+    <script>
+        // 🚀 JavaScript Logic
+
+        // --- Configuration ---
+        const cycleTime = 70000; // 10 seconds (10000 ms)
+        const fadeTime = 2000; // 2 seconds for image transition (2000 ms)
+
+        // Text and Image Data
+ 
+
+
+        // --- DOM Elements ---
+      
+      const heroSection = document.getElementById('hero-section');
+        const bgOverlay = document.getElementById('bg-overlay');
+        const heroContent = document.getElementById('hero-content');
+        const heroTitle = document.getElementById('hero-title');
+        const heroSubtitle = document.getElementById('hero-subtitle');
+        const ctaButton = document.getElementById('cta-button'); // Get the new 
+        let currentDataIndex = 0;
+
+        // --- Dynamic Content Functions ---
+        function updateHeroSection() {
+          const heroData = [
+    {
+        image: '/static/images/hero1.jpeg',
+        title: 'Discover the World',
+        subtitle: 'Breathtaking views await your journey.'
+    },
+    {
+        image: '/static/images/hero2.jpeg',
+        title: 'A New Perspective',
+        subtitle: 'See things you’ve never seen before.'
+    },
+    {
+        image: '/static/images/hero3.jpeg',
+        title: 'Explore the Unknown',
+        subtitle: 'Adventure is just a click away.'
+    },
+    {
+        image: '/static/images/hero4.jpeg',
+        title: 'The Modern Aesthetic',
+        subtitle: 'Design and beauty in every moment.'
+    }
+];
+            const nextData = heroData[currentDataIndex];
+    
+
+            
+            heroContent.style.opacity = 0;
+            bgOverlay.style.backgroundImage = `url('${nextData.image}')`;
+            bgOverlay.style.opacity = 1;
+
+            setTimeout(() => {
+                heroSection.style.backgroundImage = `url('${nextData.image}')`;
+                bgOverlay.style.opacity = 0;
+                
+                heroTitle.textContent = nextData.title;
+                heroSubtitle.textContent = nextData.subtitle;
+                
+                heroContent.style.opacity = 1;
+
+            }, fadeTime);
+
+            currentDataIndex = (currentDataIndex + 1) % heroData.length;
+        }
+
+        // --- CTA Scroll Function ---
+        function scrollToNextSection() {
+            const viewportHeight = window.innerHeight;
+            // Scroll down by 100% of the viewport height (100vh)
+            window.scrollBy({
+                top: viewportHeight,
+                behavior: 'smooth'
+            });
+        }
+        
+        // --- Event Listeners ---
+        // 1. Image cycling
+        setInterval(updateHeroSection, cycleTime); 
+        // 2. CTA click handler
+        ctaButton.addEventListener('click', scrollToNextSection);
+
+        // Initial setup (Image cycling starts after the first transition is handled by the setInterval)
+        // No need to call updateHeroSection() initially as the HTML has the default values.
+        
+    </script>
+</body>
+</html>
+
+  {% extends "layout.html" %} {% block content %}
+  <div id="placesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"></div>
+
+  <!-- Modal for Place Details -->
+  <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+      <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl">
+        &times;</button>...........................................
+      <div id="modalContent">Loading...</div>
+    </div>
   </div>
-</div>
 
-<script>
-  let userId = null; // Set this to the logged-in user's ID if available
-  let userLocation = null;
-  let userRadius = 0.5; // default in km
-  window.setUserLocationAndReload = function (loc, radius) {
-    if (loc) userLocation = loc;
-    if (radius) userRadius = radius;
-    loadPlaces();
-  };
-  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
+  <script>
+    let userId = null; // Set this to the logged-in user's ID if available
+    let userLocation = null;
+    let userRadius = 0.5; // default in km
+    window.setUserLocationAndReload = function (loc, radius) {
+      if (loc) userLocation = loc;
+      if (radius) userRadius = radius;
+      loadPlaces();
+    };
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
         Math.cos((lat2 * Math.PI) / 180) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-  async function loadPlaces(q) {
-    // If a query is provided, perform a search; otherwise load approved places
-    let url = "/api/filter?status=approved";
-    if (q && String(q).trim() !== "") {
-      url = `/api/search?q=${encodeURIComponent(q)}`;
-      // sync nav and local search inputs when called with q
-      const navInput = document.getElementById("navSearchInput");
-      const localInput = document.getElementById("searchInput");
-      if (navInput) navInput.value = q;
-      if (localInput) localInput.value = q;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
-    const res = await fetch(url);
-    const places = await res.json();
-    let html = "";
-    for (const place of places) {
-      let highlight = false;
-      if (userLocation && place.latitude && place.longitude) {
-        const dist = getDistanceFromLatLonInKm(
-          userLocation.lat,
-          userLocation.lng,
-          place.latitude,
-          place.longitude
-        );
-        if (dist <= userRadius) highlight = true;
+    async function loadPlaces(q) {
+      // If a query is provided, perform a search; otherwise load approved places
+      let url = "/api/filter?status=approved";
+      if (q && String(q).trim() !== "") {
+        url = `/api/search?q=${encodeURIComponent(q)}`;
+        // sync nav and local search inputs when called with q
+        const navInput = document.getElementById("navSearchInput");
+        const localInput = document.getElementById("searchInput");
+        if (navInput) navInput.value = q;
+        if (localInput) localInput.value = q;
       }
-      // compute robust pid and normalize image URL
-      const pid = place.place_id || place.id || place.ID || place.placeId || "";
-      function normalizeImageUrl(url) {
-        if (!url) return "/static/images/placeholder.jpg";
-        url = String(url).trim();
-        if (url.startsWith("http://") || url.startsWith("https://")) return url;
-        if (url.startsWith("/static/")) return url;
-        if (url.startsWith("/")) return "/static/images" + url;
-        return "/static/images/" + url;
-      }
-      const imageUrl = normalizeImageUrl(place.image_url);
-      // compute rating display: prefer server-provided average and total_reviews
-      let avg =
-        place.average_rating !== undefined && place.average_rating !== null
-          ? parseFloat(place.average_rating)
-          : place.rating
-          ? parseFloat(place.rating)
-          : null;
-      let total =
-        place.total_reviews !== undefined && place.total_reviews !== null
-          ? parseInt(place.total_reviews)
-          : place.total_reviews || 0;
-      let starsHtml = "";
-      let ratingText = "";
-      if (!total) {
-        starsHtml = "☆☆☆☆☆";
-        ratingText = "No reviews yet";
-      } else {
-        const filled = Math.max(0, Math.min(5, Math.floor(avg || 0)));
-        starsHtml = "★".repeat(filled) + "☆".repeat(5 - filled);
-        ratingText =
-          avg !== null && !Number.isNaN(avg) ? avg.toFixed(1) : "0.0";
-      }
+      const res = await fetch(url);
+      const places = await res.json();
+      let html = "";
+      for (const place of places) {
+        console.log(place);
 
-      html += `
-      <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative group ${
-        highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
-      }">
-        <img src="${imageUrl}" alt="Image" class="w-full h-64 object-cover" />
+        let highlight = false;
+        if (userLocation && place.latitude && place.longitude) {
+          const dist = getDistanceFromLatLonInKm(
+            userLocation.lat,
+            userLocation.lng,
+            place.latitude,
+            place.longitude
+          );
+          if (dist <= userRadius) highlight = true;
+        }
+        // compute robust pid and normalize image URL
+        const pid = place.place_id || place.id || place.ID || place.placeId || "";
+        function normalizeImageUrl(url) {
+          if (!url) return "/static/images/placeholder.jpg";
+          url = String(url).trim();
+          if (url.startsWith("http://") || url.startsWith("https://")) return url;
+          if (url.startsWith("/static/")) return url;
+          if (url.startsWith("/")) return "/static/images" + url;
+          return "/static/uploads/" + url;
+        }
+        const imageUrl = normalizeImageUrl(place.image_url);
+        // compute rating display: prefer server-provided average and total_reviews
+        let avg =
+          place.average_rating !== undefined && place.average_rating !== null
+            ? parseFloat(place.average_rating)
+            : place.rating
+              ? parseFloat(place.rating)
+              : null;
+        let total =
+          place.total_reviews !== undefined && place.total_reviews !== null
+            ? parseInt(place.total_reviews)
+            : place.total_reviews || 0;
+        let starsHtml = "";
+        let ratingText = "";
+        if (!total) {
+          starsHtml = "☆☆☆☆☆";
+          ratingText = "No reviews yet";
+        } else {
+          const filled = Math.max(0, Math.min(5, Math.floor(avg || 0)));
+          starsHtml = "★".repeat(filled) + "☆".repeat(5 - filled);
+          ratingText =
+            avg !== null && !Number.isNaN(avg) ? avg.toFixed(1) : "0.0";
+        }
+
+        html += `
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative group ${highlight ? "ring-4 ring-green-400 ring-opacity-60" : ""
+          }">
+        ${place.image_url ? `<img src="${place.image_url.slice(4)}" alt="Image" class="w-full h-64 object-cover" />` : ''}
           <button onclick="toggleFavorite(event, ${pid})" class="absolute top-3 right-3 z-10 text-2xl text-gray-400 hover:text-red-500 group-hover:scale-110 transition-transform">
             <span id="fav-icon-${pid}">♡</span>
           </button>
         <div class="p-4 flex-1 flex flex-col justify-between">
           <div>
-            <h2 class="text-lg font-semibold mb-2 text-blue-700">${
-              place.name
-            }</h2>
-            <p class="text-gray-600 mb-2">${
-              place.description
-                ? place.description.substring(0, 100) +
-                  (place.description.length > 100 ? "..." : "")
-                : ""
-            }</p>
+            
+            <h2 class="text-lg font-semibold mb-2 text-blue-700">${place.name
+          } </h2>
+            <p class="text-gray-600 mb-2">${place.description
+            ? place.description.substring(0, 100) +
+            (place.description.length > 100 ? "..." : "")
+            : ""
+          }</p>
             <div class="flex items-center gap-2 mb-2">
-              <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">${
-                place.category || ""
-              }</span>
-              <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">${
-                place.region || ""
-              }</span>
+              <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">${place.category || ""
+          }</span>
+              <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">${place.region || ""
+          }</span>
             </div>
-            <div class="flex items-center gap-1 mb-2">
-              <span class="text-yellow-400">${starsHtml}</span>
-              <span class="text-xs text-gray-500">${ratingText}</span>
-            </div>
+           
               <button onclick="viewDetails(event, '${pid}')" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">View Details</button>
           </div>
         </div>
       </div>
     `;
+      }
+      document.getElementById("placesGrid").innerHTML = html;
     }
-    document.getElementById("placesGrid").innerHTML = html;
-  }
-  function askLocationAndReload() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function (pos) {
-        userLocation = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
-        loadPlaces();
-      });
-    } else {
-      alert("Geolocation is not supported by your browser.");
+    function askLocationAndReload() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          userLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          loadPlaces();
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
     }
-  }
-  function onRadiusChange(e) {
-    userRadius = parseFloat(e.target.value);
-    loadPlaces();
-  }
-  async function toggleFavorite(e, placeId) {
-    e.stopPropagation();
-    if (!userId) {
-      alert("Please log in to save favorites.");
-      return;
+    function onRadiusChange(e) {
+      userRadius = parseFloat(e.target.value);
+      loadPlaces();
     }
-    const icon = document.getElementById(`fav-icon-${placeId}`);
-    if (icon.textContent === "♡") {
-      await fetch(`/api/favorites?user_id=${userId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ place_id: placeId }),
-      });
-      icon.textContent = "♥";
-      icon.classList.add("text-red-500");
-    } else {
-      await fetch(`/api/favorites?user_id=${userId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ place_id: placeId }),
-      });
-      icon.textContent = "♡";
-      icon.classList.remove("text-red-500");
+    async function toggleFavorite(e, placeId) {
+      e.stopPropagation();
+      if (!userId) {
+        alert("Please log in to save favorites.");
+        return;
+      }
+      const icon = document.getElementById(`fav-icon-${placeId}`);
+      if (icon.textContent === "♡") {
+        await fetch(`/api/favorites?user_id=${userId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ place_id: placeId }),
+        });
+        icon.textContent = "♥";
+        icon.classList.add("text-red-500");
+      } else {
+        await fetch(`/api/favorites?user_id=${userId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ place_id: placeId }),
+        });
+        icon.textContent = "♡";
+        icon.classList.remove("text-red-500");
+      }
     }
-  }
-  async function viewDetails(e, id) {
-    // Navigate to the dedicated place detail page instead of opening a modal
-    try {
-      e && e.stopPropagation && e.stopPropagation();
-    } catch (err) {
-      /* ignore */
+    async function viewDetails(e, id) {
+      // Navigate to the dedicated place detail page instead of opening a modal
+      try {
+        e && e.stopPropagation && e.stopPropagation();
+      } catch (err) {
+        /* ignore */
+      }
+      window.location.href = "/places/" + encodeURIComponent(String(id));
     }
-    window.location.href = "/places/" + encodeURIComponent(String(id));
-  }
-  // Modal-based review loading/close removed. View details now opens a dedicated page.
-  window.onload = function () {
-    loadPlaces();
-  };
-</script>
-{% endblock %}
+    // Modal-based review loading/close removed. View details now opens a dedicated page.
+    window.onload = function () {
+      loadPlaces();
+    };
+  </script>
+  {% endblock %}

@@ -36,13 +36,60 @@ def places_list():
       db = get_db()
       cursor = db.cursor(dictionary=True)
       category = None
-      if 'category' in request.args:
+      if 'category' or 'q' in request.args:
          category = request.args.get('category')
+         q=request.args.get('q')
+
+         print(f"Filtering places by category: {category}, search query: {q}")
       if category:
-         cursor.execute("SELECT * FROM Places WHERE category = %s ORDER BY created_at DESC", (category,))
+         
+         # category may be an id or a name; detect numeric ids and query accordingly
+         cat = category.strip() if isinstance(category, str) else category
+         if cat and str(cat).isdigit():
+             # filter by category_id via the join table
+             cursor.execute("""
+                SELECT p.*, MIN(pi.image_url) AS image_url
+                FROM Places p
+                LEFT JOIN Place_Images pi ON p.place_id = pi.place_id
+                JOIN Place_Categories pc ON p.place_id = pc.place_id
+                WHERE pc.category_id = %s
+                GROUP BY p.place_id
+                ORDER BY p.created_at DESC
+             """, (int(cat),))
+         else:
+             # filter by category name
+             cursor.execute("""
+                SELECT p.*, MIN(pi.image_url) AS image_url
+                FROM Places p
+                LEFT JOIN Place_Images pi ON p.place_id = pi.place_id
+                JOIN Place_Categories pc ON p.place_id = pc.place_id
+                LEFT JOIN Categories c ON pc.category_id = c.category_id
+                WHERE c.name = %s
+                GROUP BY p.place_id
+                ORDER BY p.created_at DESC
+             """, (cat,))
+         print(f"Filtering places by category: {category}")
+      elif q:
+         cursor.execute("""
+            SELECT p.*, MIN(pi.image_url) AS image_url
+            FROM Places p
+            LEFT JOIN Place_Images pi ON p.place_id = pi.place_id
+            WHERE p.name LIKE %s OR p.description LIKE %s
+            GROUP BY p.place_id
+            ORDER BY p.created_at DESC
+         """, (f"%{q}%", f"%{q}%")) 
+         print(f"Searching places with query: {q}")
       else:
-         cursor.execute("SELECT * FROM Places ORDER BY created_at DESC")
+         print("No category filter applied")
+         cursor.execute("""
+            SELECT p.*, MIN(pi.image_url) AS image_url
+            FROM Places p
+            LEFT JOIN Place_Images pi ON p.place_id = pi.place_id
+            GROUP BY p.place_id
+            ORDER BY p.created_at DESC
+         """)
       places = cursor.fetchall()
+      print("place route ko hai",places)
       return render_template("places_list.html", places=places)
    except Exception as e:
       print(f"Error in places_list: {e}")
@@ -362,7 +409,13 @@ def search_places():
     query = request.args.get('q', '')
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM places WHERE name LIKE %s OR description LIKE %s", (f"%{query}%", f"%{query}%"))
+    cursor.execute("""
+        SELECT p.*, MIN(pi.image_url) as image_url 
+        FROM Places p
+        LEFT JOIN Place_Images pi ON p.place_id = pi.place_id 
+        WHERE p.name LIKE %s OR p.description LIKE %s
+        GROUP BY p.place_id
+    """, (f"%{query}%", f"%{query}%"))
     results = cursor.fetchall()
     cursor.close()
     db.close()
@@ -374,8 +427,17 @@ def filter_places():
     status = request.args.get('status', 'approved')
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM places WHERE status = %s", (status,))
+    cursor.execute("""
+        SELECT p.*, MIN(pi.image_url) as image_url
+        FROM Places p 
+        LEFT JOIN Place_Images pi ON p.place_id = pi.place_id 
+        WHERE p.status = %s
+        GROUP BY p.place_id
+    """, (status,))
+
     results = cursor.fetchall()
+
+    print(results)
     cursor.close()
     db.close()
     return jsonify(results)
@@ -383,17 +445,63 @@ def filter_places():
 # Get nearby places (simple version: within latitude/longitude range)
 @viewer_bp.route('/api/nearby')
 def nearby_places():
-    lat = float(request.args.get('lat', 0))
-    lng = float(request.args.get('lng', 0))
-    radius = float(request.args.get('radius', 0.1))  # degrees, not km
+    lat = request.args.get('lat')
+    lng = request.args.get('lng')
+    # Use a practical distance radius, e.g., 5 kilometers (3.1 miles)
+    radius_km = request.args.get('radius', 5.0) 
+    
+    try:
+        lat = float(lat)
+        lng = float(lng)
+        radius_km = float(radius_km)
+    except (TypeError, ValueError):
+        # Handle cases where lat/lng/radius are missing or invalid
+        return jsonify({"error": "Invalid latitude, longitude, or radius."}), 400
+
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM places WHERE ABS(latitude - %s) < %s AND ABS(longitude - %s) < %s", (lat, radius, lng, radius))
-    results = cursor.fetchall()
-    cursor.close()
-    db.close()
-    return jsonify(results)
 
+    # --- Haversine Formula SQL Query ---
+    # Calculates the distance in kilometers between the given (lat, lng) and each place
+    # 6371 is the approximate radius of the Earth in kilometers.
+    # Replace 'latitude' and 'longitude' with the actual column names in your 'places' table.
+    sql_query = """
+    SELECT 
+        *,
+        ( 6371 * acos( 
+            cos( radians(%s) ) 
+            * cos( radians( latitude ) ) 
+            * cos( radians( longitude ) - radians(%s) ) 
+            + sin( radians(%s) ) 
+            * sin( radians( latitude ) ) 
+        ) ) AS distance_km
+    FROM 
+        places
+    HAVING 
+        distance_km < %s
+    ORDER BY
+        distance_km
+    LIMIT 20;  -- Limit results for performance
+    """
+
+    # Parameters: (lat, lng, lat, radius_km)
+    params = (lat, lng, lat, radius_km)
+    
+    try:
+        cursor.execute(sql_query, params)
+        results = cursor.fetchall()
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "A database error occurred."}), 500
+        
+    print(f"Nearby places within {radius_km} km: {len(results)}")
+    
+    cursor.close()
+    # Note: In a real app, you might not close the connection here if using a connection pool.
+    # Assuming get_db() opens and needs a close() call.
+    db.close() 
+    
+    return jsonify(results)
 # Get weather for a place (dummy data, replace with real API if needed)
 @viewer_bp.route('/api/weather/<int:place_id>')
 def place_weather(place_id):

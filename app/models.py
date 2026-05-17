@@ -1,33 +1,73 @@
 
 from flask_login import UserMixin
+import json
+import os
 
-from flask import g
-import mysql.connector
-from mysql.connector import Error
+CONFIG_FILE = "config.json"
+
+def load_config():
+    """Load database config, or create a new one if not found."""
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r") as file:
+            return json.load(file)
+    else:
+        return create_config_interactively()
+
+def create_config_interactively():
+    """Ask user for DB details and save them."""
+    print("\n⚙️ Database configuration not found or invalid.")
+    print("Please enter your MySQL database details:\n")
+
+    host = input("Host (default: localhost): ") or "localhost"
+    user = input("User (default: root): ") or "root"
+    password = input("Password: ")
+    database = input("Database name: ")
+
+    config = {
+        "mysql": {
+            "host": host,
+            "user": user,
+            "password": password,
+            "database": database
+        }
+    }
+
+    with open(CONFIG_FILE, "w") as file:
+        json.dump(config, file, indent=4)
+
+    print("\n✅ Configuration saved to config.json successfully!\n")
+    return config
 
 def get_db():
-    if 'db' not in g:
-        try:
-            g.db = mysql.connector.connect(
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="Pawan23@316#",
-                database="hidden_nepal"
-            )
-            print("✅ Database connection established")
-        except Error as e:
-            print("❌ Database connection failed:", e)
-            g.db = None
-    return g.db
+    """Establish a MySQL connection, ask for new details if error occurs."""
+    config = load_config()
 
+    try:
+        db_config = config["mysql"]
+        connection = mysql.connector.connect(
+            host=db_config["host"],
+            user=db_config["user"],
+            password=db_config["password"],
+            database=db_config["database"]
+        )
 
-def close_db(exception=None):
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
-        print("Database connection closed")
+        if connection.is_connected():
+            print("✅ Database connection successful!")
+            return connection
 
+    except mysql.connector.Error as err:
+        print(f"\n❌ Database connection failed: {err}")
+        print("Let's reconfigure your database connection.")
+        config = create_config_interactively()
+        return get_db()  # Try again recursively
+
+# Example usage
+if __name__ == "__main__":
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SHOW TABLES;")
+    print(cursor.fetchall())
+    conn.close()
 
 
 
