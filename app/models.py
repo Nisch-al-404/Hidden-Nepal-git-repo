@@ -1,4 +1,4 @@
-import mysql.connector
+
 from flask_login import UserMixin
 import json
 import os
@@ -78,6 +78,9 @@ class User(UserMixin):
     def __init__(self, user_id,name, email, role):
       
         self.id = user_id
+    def __init__(self, user_id,name, email, role):
+      
+        self.id = user_id
         self.name = name
         self.email = email
         self.role = role
@@ -98,12 +101,10 @@ class Place:
         db = get_db()
         cursor = db.cursor()
         query = """
-        INSERT INTO places (name, description, latitude, longitude, image_url, contributor_id, status, created_at)
+        INSERT INTO Places (name, description, latitude, longitude, image_url, contributor_id, status, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (self.name, self.description, self.latitude, self.longitude,
-                               self.image_url, self.contributor_id, self.status, self.created_at))
+        cursor.execute(query, (self.name, self.description, self.latitude, self.longitude, self.image_url, self.contributor_id, self.status, self.created_at))
         db.commit()
         cursor.close()
-        db.close()    
-# # contribute1@gmail.com contribute1
+        db.close()
